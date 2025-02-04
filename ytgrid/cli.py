@@ -7,6 +7,8 @@ from rich.console import Console
 from rich.table import Table
 from rich.live import Live
 from rich.progress import Progress
+from ytgrid.utils.config import config
+
 
 API_BASE_URL = "http://127.0.0.1:8000"
 WS_URL = "ws://127.0.0.1:8000/ws"
@@ -51,12 +53,18 @@ def get_status():
     table = Table(title="Active YTGrid Sessions")
     table.add_column("Session ID", justify="center")
     table.add_column("URL", justify="left")
-    table.add_column("Status", justify="center")
+    table.add_column("Loop Progress", justify="center")
 
     for session in data["active_sessions"]:
-        table.add_row(str(session["id"]), session["url"], session["status"])
+        table.add_row(
+            str(session["id"]),
+            session["url"],
+            f"{session['current_loop']} / {session.get('total_loops', 'Unknown')}"
+        )
 
     console.print(table)
+
+
 
 
 def listen_for_updates():

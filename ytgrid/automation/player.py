@@ -30,10 +30,10 @@ def get_video_title(video_url):
     return title.text.replace(' - YouTube', '') if title else "Unknown Video"
 
 
-def get_video_duration(driver, wait):
+def get_video_duration(driver):
     """Extracts the duration of the video in seconds."""
     try:
-        video = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "video")))
+        video = driver.find_element(By.CSS_SELECTOR, "video")
         duration = driver.execute_script("return arguments[0].duration;", video)
         return duration if duration and duration > 0 else None
     except Exception as e:
@@ -77,6 +77,7 @@ def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_
             for video_element in video_elements:
                 href = video_element.get_attribute('href')
                 if href and video_url in href:
+                    log_info(f"Clicking on video: {href}")
                     video_element.click()
                     break
             else:
@@ -84,14 +85,20 @@ def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_
                 send_update(ws, {"status": "error", "message": "Video not found in search results"})
                 continue  # Skip this loop iteration
 
-            # Wait for the video to load
-            video = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "video")))
+            # Wait for video to load
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "video")))
+
+            # Handle potential ads before video starts
+            skip_ad(driver)
 
             # Set playback speed
-            driver.execute_script(f"arguments[0].playbackRate = {speed};", video)
+            driver.execute_script(f"document.querySelector('video').playbackRate = {speed};")
+
+            # Ensure the video is playing
+            driver.execute_script("document.querySelector('video').play();")
 
             # Get video duration
-            video_duration = get_video_duration(driver, wait)
+            video_duration = get_video_duration(driver)
             if video_duration is None:
                 log_info("Could not determine video duration, waiting manually for 5 minutes.")
                 time.sleep(300)  # Fallback wait time
@@ -114,3 +121,15 @@ def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_
 
     if ws:
         ws.close()
+
+
+def skip_ad(driver):
+    """Skips YouTube ads if present."""
+    try:
+        ad_skip_button = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.CLASS_NAME, "ytp-ad-skip-button"))
+        )
+        ad_skip_button.click()
+        log_info("Skipped ad.")
+    except:
+        log_info("No skippable ad detected.")

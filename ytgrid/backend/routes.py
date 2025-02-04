@@ -58,7 +58,16 @@ def stop_session(request: StopSessionRequest):
 
 @router.get("/status")
 def get_status():
-    """Returns the status of all active sessions."""
+    """Returns the status of all active sessions with loop progress."""
     active_sessions = task_manager.get_active_sessions()
-    session_info = [{"id": session_id, "url": session_store.sessions[session_id]["url"], "status": "running"} for session_id in active_sessions]
+    session_info = [
+        {
+            "id": session["id"],
+            "url": session_store.sessions[session["id"]]["url"],
+            "status": "running",
+            "current_loop": session["loop"],
+            "total_loops": session_store.sessions[session["id"]].get("loop_count", "Unknown"),
+        }
+        for session in active_sessions
+    ]
     return {"active_sessions": session_info}

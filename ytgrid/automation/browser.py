@@ -14,7 +14,7 @@ def get_browser(user_data_dir=None):
 
     # Set headless mode based on config
     if config.HEADLESS_MODE:
-        options.add_argument("--headless")
+        options.add_argument("--headless=new")
 
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -28,6 +28,6 @@ def get_browser(user_data_dir=None):
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
 
-    wait = WebDriverWait(driver, config.BROWSER_TIMEOUT)
+    wait = WebDriverWait(driver, 20)
 
     return driver, wait
