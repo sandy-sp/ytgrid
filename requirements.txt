@@ -1,0 +1,77 @@
+anaconda-anon-usage @ file:///croot/anaconda-anon-usage_1732732445543/work
+annotated-types==0.7.0
+anyio==4.8.0
+archspec @ file:///croot/archspec_1709217642129/work
+attrs==25.1.0
+beautifulsoup4==4.13.1
+bidict==0.23.1
+boltons @ file:///work/perseverance-python-buildout/croot/boltons_1698851177130/work
+Brotli @ file:///croot/brotli-split_1714483155106/work
+certifi @ file:///croot/certifi_1734473278428/work/certifi
+cffi @ file:///croot/cffi_1726856441404/work
+charset-normalizer @ file:///croot/charset-normalizer_1721748349566/work
+click==8.1.8
+conda @ file:///croot/conda_1733841818148/work
+conda-anaconda-telemetry @ file:///croot/conda-anaconda-telemetry_1733258728466/work
+conda-content-trust @ file:///croot/conda-content-trust_1714483159009/work
+conda-libmamba-solver @ file:///croot/conda-libmamba-solver_1727775630457/work/src
+conda-package-handling @ file:///croot/conda-package-handling_1731369017509/work
+conda_package_streaming @ file:///croot/conda-package-streaming_1731366181659/work
+cryptography @ file:///croot/cryptography_1732129644106/work
+distro @ file:///croot/distro_1714488253808/work
+fastapi==0.115.8
+frozendict @ file:///croot/frozendict_1713194832637/work
+h11==0.14.0
+idna @ file:///croot/idna_1714398848350/work
+jsonpatch @ file:///croot/jsonpatch_1714483231291/work
+jsonpointer==2.1
+libmambapy @ file:///croot/mamba-split_1732896306512/work/libmambapy
+lxml==5.3.0
+markdown-it-py==3.0.0
+mdurl==0.1.2
+menuinst @ file:///croot/menuinst_1731364904452/work
+metadata-cleaner==1.0.0
+mutagen==1.47.0
+netifaces==0.10.6
+outcome==1.3.0.post0
+packaging @ file:///croot/packaging_1720101850331/work
+pillow==11.1.0
+platformdirs @ file:///work/perseverance-python-buildout/croot/platformdirs_1701732573265/work
+pluggy @ file:///croot/pluggy_1733169602837/work
+pycosat @ file:///croot/pycosat_1714510623388/work
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+pydantic==2.10.6
+pydantic_core==2.27.2
+Pygments==2.19.1
+pymediainfo==6.1.0
+pypdf==5.2.0
+PyPDF2==3.0.1
+PySocks @ file:///work/perseverance-python-buildout/croot/pysocks_1698845478203/work
+python-docx==1.1.2
+python-dotenv==1.0.1
+python-engineio==4.11.2
+python-socketio==5.12.1
+requests @ file:///croot/requests_1730999120400/work
+rich==13.9.4
+ruamel.yaml @ file:///croot/ruamel.yaml_1727980156079/work
+ruamel.yaml.clib @ file:///croot/ruamel.yaml.clib_1727769819935/work
+selenium==4.28.1
+setuptools==75.8.0
+simple-websocket==1.1.0
+sniffio==1.3.1
+sortedcontainers==2.4.0
+soupsieve==2.6
+starlette==0.45.3
+tqdm @ file:///croot/tqdm_1724853939799/work
+trio==0.28.0
+trio-websocket==0.11.1
+truststore @ file:///work/perseverance-python-buildout/croot/truststore_1701735771625/work
+typing_extensions==4.12.2
+urllib3 @ file:///croot/urllib3_1727769808118/work
+uvicorn==0.34.0
+webdriver-manager==4.0.2
+websocat==1.13.0
+websocket-client==1.8.0
+wheel==0.44.0
+wsproto==1.2.0
+zstandard @ file:///croot/zstandard_1731356346222/work
