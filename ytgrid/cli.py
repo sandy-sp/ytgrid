@@ -8,6 +8,9 @@ from rich.table import Table
 from rich.live import Live
 from rich.progress import Progress
 from ytgrid.utils.config import config
+import subprocess
+import requests
+import time
 
 
 API_BASE_URL = "http://127.0.0.1:8000"
@@ -16,22 +19,35 @@ WS_URL = "ws://127.0.0.1:8000/ws"
 console = Console()
 
 
+def is_api_running():
+    """Check if FastAPI server is running."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/status", timeout=2)
+        return response.status_code == 200
+    except requests.ConnectionError:
+        return False
+
+def start_fastapi_server():
+    """Start FastAPI server if it's not running."""
+    if not is_api_running():
+        print("[INFO] Starting FastAPI server...")
+        subprocess.Popen(["uvicorn", "ytgrid.backend.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload"])
+
 def start_session(url: str, speed: float = 1.0, loops: int = 1):
-    """Starts a new YT automation session and listens for WebSocket updates."""
+    """Starts a YouTube automation session and ensures API is running."""
+    start_fastapi_server()
+    time.sleep(2)  # Allow time for server to start
+    
     response = requests.post(
         f"{API_BASE_URL}/sessions/start",
         json={"url": url, "speed": speed, "loop_count": loops}
     )
-
+    
     try:
         data = response.json()
-        if "session_id" in data:
-            console.print(f"[green]Session Started:[/green] ID: {data.get('session_id')} | URL: {data.get('url')} | Speed: {data.get('speed')} | Loops: {data.get('loops')}")
-            listen_for_updates()
-        else:
-            console.print(f"[red]Error:[/red] {data}")
+        print(f"Session Started: {data}")
     except requests.exceptions.JSONDecodeError:
-        console.print(f"[red]API returned an invalid response. Check FastAPI logs.[/red]")
+        print("[ERROR] API returned an invalid response.")
 
 
 

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ytgrid",
-    version="1.0.0",
+    version="1.0.1",
     packages=find_packages(),
     install_requires=[
         "fastapi",
@@ -26,7 +26,6 @@ setup(
     author="Sandeep Paidipati",
     author_email="sandeep.paidipati@gmail.com",
     url="https://github.com/sandy-sp/ytgrid",
-    license="MIT",
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
