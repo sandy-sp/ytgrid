@@ -40,7 +40,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @router.post("/sessions/start")
 def start_session(request: StartSessionRequest):
-    """Starts a YouTube automation session with multiprocessing support."""
+    """Starts a YT automation session with multiprocessing support."""
     session_id = session_store.create_session(request.url)
     task_manager.start_session(session_id, request.url, request.speed, request.loop_count)
     return {"message": "Session started", "session_id": session_id, "url": request.url, "speed": request.speed, "loops": request.loop_count}

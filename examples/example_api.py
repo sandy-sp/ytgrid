@@ -6,7 +6,7 @@ BASE_URL = "http://127.0.0.1:8000"
 # Start a session
 print("Starting a session via API...")
 response = requests.post(f"{BASE_URL}/sessions/start", json={
-    "url": "https://www.youtube.com/watch?v=tCDvOQI3pco",
+    "url": "https://www.youtube.com/watch?v=OaOK76hiW8I",
     "speed": 1.5,
     "loop_count": 2
 })

@@ -99,7 +99,7 @@ ytgrid --help
 ## 🖥️ **CLI Usage**
 ### **Start a YT Automation Session**
 ```sh
-ytgrid start --url "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --speed 1.5 --loops 3
+ytgrid start --url "https://www.youtube.com/watch?v=OaOK76hiW8I" --speed 1.5 --loops 3
 ```
 
 ### **Check Active Sessions**

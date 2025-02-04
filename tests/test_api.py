@@ -6,7 +6,7 @@ BASE_URL = "http://127.0.0.1:8000"
 def test_api_start():
     """Test API start session"""
     response = requests.post(f"{BASE_URL}/sessions/start", json={
-        "url": "https://www.youtube.com/watch?v=zU9y354XAgM",
+        "url": "https://www.youtube.com/watch?v=OaOK76hiW8I",
         "speed": 1.5,
         "loop_count": 2
     })

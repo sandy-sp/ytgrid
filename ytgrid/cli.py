@@ -17,7 +17,7 @@ console = Console()
 
 
 def start_session(url: str, speed: float = 1.0, loops: int = 1):
-    """Starts a new YouTube automation session and listens for WebSocket updates."""
+    """Starts a new YT automation session and listens for WebSocket updates."""
     response = requests.post(
         f"{API_BASE_URL}/sessions/start",
         json={"url": url, "speed": speed, "loop_count": loops}
@@ -96,9 +96,9 @@ def listen_for_updates():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="YTGrid CLI - YouTube Automation Manager")
+    parser = argparse.ArgumentParser(description="YTGrid CLI - YT Automation Manager")
     parser.add_argument("command", choices=["start", "stop", "status"], help="Command to execute")
-    parser.add_argument("--url", type=str, help="YouTube video URL (Required for 'start')")
+    parser.add_argument("--url", type=str, help="YT video URL (Required for 'start')")
     parser.add_argument("--speed", type=float, default=1.0, help="Playback speed (Default: 1.0)")
     parser.add_argument("--loops", type=int, default=1, help="Number of loops for full automation")
     parser.add_argument("--session_id", type=str, help="Session ID (Required for 'stop')")

@@ -23,7 +23,7 @@ def send_update(ws, message):
 
 
 def get_video_title(video_url):
-    """Extracts the video title from the YouTube page."""
+    """Extracts the video title from the YT page."""
     response = requests.get(video_url)
     soup = BeautifulSoup(response.text, 'html.parser')
     title = soup.find('title')
@@ -41,7 +41,7 @@ def get_video_duration(driver):
         return None
 
 def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_LOOP_COUNT):
-    """Plays a YouTube video for `loop_count` times, ensuring browser closes after stopping."""
+    """Plays a YT video for `loop_count` times, ensuring browser closes after stopping."""
 
     ws = None
     if config.ENABLE_REALTIME_UPDATES:
@@ -64,7 +64,7 @@ def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_
 
             video_title = get_video_title(video_url)
 
-            # Open YouTube and search for the video title
+            # Open YT and search for the video title
             driver.get("https://www.youtube.com/")
             search_box = wait.until(EC.presence_of_element_located((By.NAME, "search_query")))
             search_box.send_keys(video_title)
@@ -124,7 +124,7 @@ def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_
 
 
 def skip_ad(driver):
-    """Skips YouTube ads if present."""
+    """Skips YT ads if present."""
     try:
         ad_skip_button = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.CLASS_NAME, "ytp-ad-skip-button"))

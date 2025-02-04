@@ -3,7 +3,7 @@ import pytest
 
 def test_cli_start():
     """Test CLI start command"""
-    result = subprocess.run(["ytgrid", "start", "--url", "https://www.youtube.com/watch?v=tCDvOQI3pco"], capture_output=True, text=True)
+    result = subprocess.run(["ytgrid", "start", "--url", "https://www.youtube.com/watch?v=ZZ63B6tVDzk"], capture_output=True, text=True)
     assert "Session Started" in result.stdout
 
 def test_cli_status():

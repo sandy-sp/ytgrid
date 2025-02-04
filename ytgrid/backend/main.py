@@ -3,7 +3,7 @@ from ytgrid.backend.routes import router as api_router
 
 app = FastAPI(
     title="YTGrid API",
-    description="A FastAPI backend for managing YouTube automation",
+    description="A FastAPI backend for managing YT automation",
     version="0.1.0"
 )
 
