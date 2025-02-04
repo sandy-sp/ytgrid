@@ -27,6 +27,7 @@ setup(
     author_email="sandeep.paidipati@gmail.com",
     url="https://github.com/sandy-sp/ytgrid",
     license="MIT",
+    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
