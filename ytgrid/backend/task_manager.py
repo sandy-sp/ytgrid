@@ -45,16 +45,24 @@ class TaskManager:
         del self.loop_counts[session_id]  # Remove session after completion
 
     def stop_session(self, session_id):
-        """Stops an active session by terminating its process."""
+        """Stops an active session by terminating its process and closing the browser."""
         if session_id in self.processes:
             self.processes[session_id].terminate()
             self.processes[session_id].join()
             del self.processes[session_id]
+            
             if session_id in self.loop_counts:
                 del self.loop_counts[session_id]
+            
             log_info(f"Session {session_id} stopped.")
+
+            # ✅ Ensure all browser instances are closed when a session stops
+            os.system("pkill -f chromedriver")  # Kill any Chrome WebDriver instances
+            os.system("pkill -f chrome")  # Kill any Chrome browsers
+
             return True
         return False
+
 
     def get_active_sessions(self):
         """Returns a list of active session IDs with loop progress."""

@@ -40,10 +40,9 @@ def get_video_duration(driver):
         log_error(f"Error fetching video duration: {e}")
         return None
 
-
 def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_LOOP_COUNT):
-    """Plays a YouTube video for `loop_count` times, restarting the entire process each time."""
-    
+    """Plays a YouTube video for `loop_count` times, ensuring browser closes after stopping."""
+
     ws = None
     if config.ENABLE_REALTIME_UPDATES:
         try:
@@ -61,7 +60,7 @@ def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_
 
         try:
             log_info(f"Loop {loop + 1}/{loop_count}: Playing {video_url}")
-            send_update(ws, {"status": "playing", "loop": loop + 1, "total_loops": loop_count})
+            send_update(ws, {"status": "playing", "loop": loop + 1})
 
             video_title = get_video_title(video_url)
 
@@ -107,20 +106,21 @@ def play_video(video_url, speed=config.DEFAULT_SPEED, loop_count=config.DEFAULT_
                 time.sleep(video_duration / speed)
 
             log_info(f"Loop {loop + 1}/{loop_count} completed.")
-            send_update(ws, {"status": "completed", "loop": loop + 1, "total_loops": loop_count})
+            send_update(ws, {"status": "completed", "loop": loop + 1})
 
         except Exception as e:
             log_error(f"Error: {e}")
             send_update(ws, {"status": "error", "message": str(e)})
 
         finally:
-            driver.quit()
+            driver.quit()  # ✅ Ensure browser is closed
 
     log_info(f"All {loop_count} loops completed for {video_url}.")
-    send_update(ws, {"status": "all_completed", "total_loops": loop_count})
+    send_update(ws, {"status": "all_completed"})
 
     if ws:
         ws.close()
+
 
 
 def skip_ad(driver):

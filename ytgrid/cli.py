@@ -59,7 +59,7 @@ def get_status():
         table.add_row(
             str(session["id"]),
             session["url"],
-            f"{session['current_loop']} / {session.get('total_loops', 'Unknown')}"
+            f"{session['current_loop']}"
         )
 
     console.print(table)

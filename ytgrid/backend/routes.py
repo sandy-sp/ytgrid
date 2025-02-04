@@ -65,8 +65,7 @@ def get_status():
             "id": session["id"],
             "url": session_store.sessions[session["id"]]["url"],
             "status": "running",
-            "current_loop": session["loop"],
-            "total_loops": session_store.sessions[session["id"]].get("loop_count", "Unknown"),
+            "current_loop": session["loop"]
         }
         for session in active_sessions
     ]
