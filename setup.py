@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ytgrid",
-    version="0.1.0",
+    version="1.0.0",
     packages=find_packages(),
     install_requires=[
         "fastapi",
@@ -10,17 +10,22 @@ setup(
         "selenium",
         "webdriver-manager",
         "requests",
-        "rich"  # For CLI live tracking
+        "rich",
+        "python-dotenv",
+        "websocket-client",
+        "bs4"
     ],
     entry_points={
         "console_scripts": [
             "ytgrid=ytgrid.cli:main"
         ]
     },
-    description="Hybrid CLI + API for scalable YouTube automation",
+    description="YTGrid is a powerful, scalable, and flexible YT automation tool that enables looped playback, remote control, and real-time tracking using a hybrid CLI + API architecture. It integrates FastAPI for REST API control, Selenium for browser automation, and Python multiprocessing for concurrent tasks.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    author="Your Name",
+    author="Sandeep Paidipati",
+    author_email="sandeep.paidipati@gmail.com",
+    url="https://github.com/sandy-sp/ytgrid",
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
