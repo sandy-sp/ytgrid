@@ -1,5 +1,3 @@
-# ytgrid/backend/routes/__init__.py
-
 from fastapi import APIRouter
 from ytgrid.backend.routes.session import router as session_router
 from ytgrid.backend.routes.task import router as task_router

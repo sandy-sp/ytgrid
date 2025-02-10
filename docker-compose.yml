@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: ytgrid_web
+    command: uvicorn ytgrid.backend.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - YTGRID_HEADLESS_MODE=True
+      - YTGRID_DEFAULT_SPEED=1.0
+      - YTGRID_DEFAULT_LOOP_COUNT=1
+      - YTGRID_MAX_SESSIONS=5
+      - YTGRID_REALTIME_UPDATES=False
+      - YTGRID_WEBSOCKET_SERVER_URL=ws://127.0.0.1:8000/ws
+      - YTGRID_USE_TEMP_USER_DATA=True
+      - YTGRID_BROWSER_TIMEOUT=20
+      # Celery settings
+      - YTGRID_USE_CELERY=True
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  celery_worker:
+    build: .
+    container_name: ytgrid_celery_worker
+    command: celery -A ytgrid.backend.celery_app.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - YTGRID_USE_CELERY=True
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - web
+
+  redis:
+    image: redis:7
+    container_name: ytgrid_redis
+    ports:
+      - "6379:6379"
+
+  # Optionally, add a Flower dashboard for monitoring Celery tasks:
+  flower:
+    image: mher/flower
+    container_name: ytgrid_flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery_worker
