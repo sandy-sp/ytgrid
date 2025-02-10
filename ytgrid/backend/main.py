@@ -1,18 +1,19 @@
+# ytgrid/backend/main.py
 from fastapi import FastAPI
-from ytgrid.backend.routes import router as api_router
+from ytgrid.backend.routes import session  # This imports your session router
 
 app = FastAPI(
-    title="YTGrid API",
-    description="A FastAPI backend for managing YT automation",
-    version="0.1.0"
+    title="YTGrid",
+    description="Enhanced version with abstract session storage",
+    version="2.0.0"
 )
 
-# Include API routes
-app.include_router(api_router)
+# Include the session routes under a common prefix
+app.include_router(session.router, prefix="/sessions", tags=["sessions"])
 
 @app.get("/")
-def read_root():
-    return {"message": "YTGrid API is running!"}
+async def root():
+    return {"message": "YTGrid API v2 is running!"}
 
 if __name__ == "__main__":
     import uvicorn
