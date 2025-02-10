@@ -1,0 +1,27 @@
+[project]
+name = "ytgrid"
+version = "2.0.0"
+description = "YTGrid is a powerful, scalable, and flexible YT automation tool that enables looped playback, remote control, and real-time tracking using a hybrid CLI + API architecture. It integrates FastAPI for REST API control, Selenium for browser automation, and Python multiprocessing/Celery for concurrent tasks."
+authors = [
+    { name = "Sandeep Paidipati", email = "sandeep.paidipati@gmail.com" }
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "selenium",
+    "webdriver-manager",
+    "requests",
+    "rich",
+    "python-dotenv",
+    "websocket-client",
+    "bs4",
+    "celery",
+    "redis"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

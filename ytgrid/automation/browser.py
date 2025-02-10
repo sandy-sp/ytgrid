@@ -1,6 +1,5 @@
-# ytgrid/automation/browser.py
-
 import tempfile
+import uuid
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -10,11 +9,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from ytgrid.utils.config import config
 
 def get_browser(user_data_dir=None):
-    """Initialize and return a Chrome browser instance with optional fresh session data."""
+    """Initialize and return a Chrome browser instance with a fresh, isolated session."""
     
     options = Options()
 
-    # Set headless mode based on configuration
+    # Enable headless mode if configured.
     if config.HEADLESS_MODE:
         options.add_argument("--headless=new")
 
@@ -22,13 +21,14 @@ def get_browser(user_data_dir=None):
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
 
-    # Use temporary user data directory if enabled
+    # Instead of using a user-data-dir, we use incognito mode to create an isolated session.
     if config.USE_TEMP_USER_DATA:
-        user_data_dir = user_data_dir or tempfile.mkdtemp()
-        options.add_argument(f"--user-data-dir={user_data_dir}")
+        options.add_argument("--incognito")
+        # If you still want to use a unique user-data-dir, you can uncomment the following:
+        # unique_dir = tempfile.mkdtemp(prefix=str(uuid.uuid4()) + "_")
+        # options.add_argument(f"--user-data-dir={unique_dir}")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
-    wait = WebDriverWait(driver, 20)
-
+    wait = WebDriverWait(driver, config.BROWSER_TIMEOUT)
     return driver, wait

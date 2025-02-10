@@ -14,5 +14,8 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
+# Ensure that the tasks module is imported so that tasks are registered.
+import ytgrid.backend.tasks  # This line forces registration of tasks like "ytgrid.tasks.run_automation"
+
 # Optionally, you can autodiscover tasks:
 # celery_app.autodiscover_tasks(['ytgrid.backend.tasks'])
