@@ -13,14 +13,20 @@ setup(
         "rich",
         "python-dotenv",
         "websocket-client",
-        "bs4"
+        "bs4",
+        "celery>=5.2",    # Added for Celery integration
+        "redis>=4.2"      # Added for Celery's broker and backend support
     ],
     entry_points={
         "console_scripts": [
             "ytgrid=ytgrid.cli:main"
         ]
     },
-    description="YTGrid is a powerful, scalable, and flexible YT automation tool that enables looped playback, remote control, and real-time tracking using a hybrid CLI + API architecture. It integrates FastAPI for REST API control, Selenium for browser automation, and Python multiprocessing for concurrent tasks.",
+    description=(
+        "YTGrid is a powerful, scalable, and flexible YT automation tool that enables looped playback, "
+        "remote control, and real-time tracking using a hybrid CLI + API architecture. It integrates FastAPI "
+        "for REST API control, Selenium for browser automation, and Python multiprocessing/Celery for concurrent tasks."
+    ),
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="Sandeep Paidipati",
