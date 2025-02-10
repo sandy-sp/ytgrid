@@ -1,7 +1,5 @@
-# ytgrid/backend/main.py
-
 from fastapi import FastAPI
-from ytgrid.backend.routes import router  # Aggregated router for sessions and tasks
+from ytgrid.backend.routes import router  # Aggregator for sessions and tasks
 
 app = FastAPI(
     title="YTGrid",
@@ -9,7 +7,7 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Include the aggregated routes
+# ✅ Use the aggregated router that includes both /sessions and /tasks
 app.include_router(router)
 
 @app.get("/")
@@ -18,4 +16,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

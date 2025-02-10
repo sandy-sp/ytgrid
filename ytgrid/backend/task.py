@@ -3,7 +3,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import json
 import time
-
 from ytgrid.backend.task_manager import task_manager
 
 router = APIRouter()
@@ -13,7 +12,7 @@ class TaskStartRequest(BaseModel):
     url: str
     speed: float
     loop_count: int
-    task_type: str = "video"  # default type
+    task_type: str = "video"
 
 class TaskStopRequest(BaseModel):
     session_id: str
@@ -47,7 +46,6 @@ def get_tasks():
 def stream_tasks():
     """
     SSE endpoint to stream active session status updates every 5 seconds.
-    Clients can listen to this endpoint for real-time monitoring.
     """
     def event_generator():
         while True:

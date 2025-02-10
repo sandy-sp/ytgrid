@@ -1,31 +1,30 @@
 import multiprocessing
 import os
 from ytgrid.utils.logger import log_info, log_error
-from ytgrid.automation.player import VideoPlayer  # Concrete automation player
+from ytgrid.automation.player import VideoPlayer
 from ytgrid.utils.config import config
 
 # Mapping from task type to automation player class.
 AUTOMATION_PLAYERS = {
     "video": VideoPlayer,
-    # Future expansion: "batch": BatchPlayer, "channel": ChannelPlayer, etc.
+    # Future: "batch": BatchPlayer, "channel": ChannelPlayer, etc.
 }
 
 class TaskManager:
     """Manages automation sessions using either multiprocessing or Celery."""
 
     def __init__(self):
-        # For multiprocessing: {session_id: Process} and loop counts.
-        # For Celery: {session_id: AsyncResult}
-        self.processes = {}
-        self.loop_counts = {}
+        self.processes = {}  # {session_id: Process or Celery Task}
+        self.loop_counts = {}  # {session_id: multiprocessing.Value}
 
     def start_session(self, session_id, url, speed, loop_count, task_type="video"):
-        """Starts a new automation session."""
+        """Starts an automation session."""
         if session_id in self.processes:
             log_info(f"Session {session_id} already exists. Skipping duplicate.")
             return False
 
         log_info(f"Starting session {session_id} for {url} with {loop_count} loops (task_type: {task_type}).")
+
         if config.USE_CELERY:
             from ytgrid.backend.celery_app import celery_app
             task = celery_app.send_task("ytgrid.tasks.run_automation", args=(session_id, url, speed, loop_count, task_type))
@@ -50,7 +49,7 @@ class TaskManager:
         task_manager.run_automation(session_id, url, speed, loop_count, loop_counter, task_type)
 
     def run_automation(self, session_id, url, speed, loop_count, loop_counter, task_type):
-        """Runs automation using the selected automation player (multiprocessing branch)."""
+        """Runs automation using the selected automation player."""
         player_class = AUTOMATION_PLAYERS.get(task_type)
         if not player_class:
             log_error(f"Unsupported task type: {task_type}")
@@ -58,9 +57,10 @@ class TaskManager:
 
         for loop in range(loop_count):
             loop_counter.value = loop + 1
-            log_info(f"Session {session_id}: Loop {loop+1}/{loop_count} - Playing {url} using '{task_type}' automation.")
+            log_info(f"Session {session_id}: Loop {loop + 1}/{loop_count} - Playing {url} using '{task_type}' automation.")
             player_instance = player_class()
             player_instance.play_video(url, speed, 1)
+
         log_info(f"Session {session_id}: All {loop_count} loops completed.")
         if session_id in self.loop_counts:
             del self.loop_counts[session_id]
@@ -89,12 +89,12 @@ class TaskManager:
         active_sessions = []
         for session_id, proc in self.processes.items():
             if config.USE_CELERY:
-                status = proc.status  # e.g., 'PENDING', 'SUCCESS'
+                status = proc.status
                 active_sessions.append({"id": session_id, "status": status})
             else:
                 loop = self.loop_counts[session_id].value if session_id in self.loop_counts else 0
                 active_sessions.append({"id": session_id, "loop": loop})
         return active_sessions
 
-# Create a global TaskManager instance.
+# Global Task Manager instance
 task_manager = TaskManager()
