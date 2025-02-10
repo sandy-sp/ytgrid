@@ -11,7 +11,7 @@ class TaskStartRequest(BaseModel):
     url: str
     speed: float
     loop_count: int
-    task_type: str = "video"  # default task type
+    task_type: str = "video"  # default type
 
 class TaskStopRequest(BaseModel):
     session_id: str
