@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   web:
     build: .
@@ -13,19 +15,25 @@ services:
       - YTGRID_DEFAULT_LOOP_COUNT=1
       - YTGRID_MAX_SESSIONS=5
       - YTGRID_REALTIME_UPDATES=False
-      - YTGRID_WEBSOCKET_SERVER_URL=ws://127.0.0.1:8000/ws
+      - YTGRID_WEBSOCKET_SERVER_URL=ws://web:8000/ws
       - YTGRID_USE_TEMP_USER_DATA=True
       - YTGRID_BROWSER_TIMEOUT=20
       - YTGRID_USE_CELERY=True
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   celery_worker:
     build: .
     container_name: ytgrid_celery_worker
-    command: celery -A ytgrid.backend.celery_app.celery_app worker --loglevel=info
+    command: celery -A ytgrid.backend.celery_app.celery_app worker --loglevel=info --uid=1000
     volumes:
       - .:/app
     environment:
@@ -41,6 +49,11 @@ services:
     container_name: ytgrid_redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   flower:
     image: mher/flower
@@ -60,4 +73,5 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - web
+      web:
+        condition: service_healthy
