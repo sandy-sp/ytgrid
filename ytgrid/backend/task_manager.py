@@ -11,7 +11,7 @@ AUTOMATION_PLAYERS = {
 }
 
 class TaskManager:
-    """Manages concurrent automation sessions using either multiprocessing or Celery."""
+    """Manages automation sessions using either multiprocessing or Celery."""
 
     def __init__(self):
         # For multiprocessing: {session_id: Process} and loop counts.
@@ -27,14 +27,12 @@ class TaskManager:
 
         log_info(f"Starting session {session_id} for {url} with {loop_count} loops (task_type: {task_type}).")
         if config.USE_CELERY:
-            # Use Celery to process the task asynchronously.
             from ytgrid.backend.celery_app import celery_app
             task = celery_app.send_task("ytgrid.tasks.run_automation", args=(session_id, url, speed, loop_count, task_type))
             self.processes[session_id] = task
             log_info(f"Celery Task {session_id} started. Task ID: {task.id}")
             return True
         else:
-            # Use multiprocessing.
             loop_counter = multiprocessing.Value('i', 0)
             self.loop_counts[session_id] = loop_counter
             process = multiprocessing.Process(
@@ -60,7 +58,7 @@ class TaskManager:
 
         for loop in range(loop_count):
             loop_counter.value = loop + 1
-            log_info(f"Session {session_id}: Loop {loop + 1}/{loop_count} - Playing {url} using '{task_type}' automation.")
+            log_info(f"Session {session_id}: Loop {loop+1}/{loop_count} - Playing {url} using '{task_type}' automation.")
             player_instance = player_class()
             player_instance.play_video(url, speed, 1)
         log_info(f"Session {session_id}: All {loop_count} loops completed.")
@@ -71,7 +69,6 @@ class TaskManager:
         """Stops an active session."""
         if session_id in self.processes:
             if config.USE_CELERY:
-                # Attempt to revoke the Celery task.
                 task = self.processes[session_id]
                 task.revoke(terminate=True)
                 log_info(f"Celery Task {session_id} revoked.")
@@ -88,17 +85,16 @@ class TaskManager:
         return False
 
     def get_active_sessions(self):
-        """Returns a list of active sessions with their current progress/status."""
+        """Returns a list of active sessions with their progress/status."""
         active_sessions = []
         for session_id, proc in self.processes.items():
             if config.USE_CELERY:
-                # Celery tasks provide a status string (e.g., 'PENDING', 'SUCCESS').
-                status = proc.status
+                status = proc.status  # e.g., 'PENDING', 'SUCCESS'
                 active_sessions.append({"id": session_id, "status": status})
             else:
                 loop = self.loop_counts[session_id].value if session_id in self.loop_counts else 0
                 active_sessions.append({"id": session_id, "loop": loop})
         return active_sessions
 
-# Global task manager instance.
+# Create a global TaskManager instance.
 task_manager = TaskManager()

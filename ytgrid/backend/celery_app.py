@@ -13,3 +13,6 @@ celery_app.conf.update(
     timezone='UTC',
     enable_utc=True,
 )
+
+# Optionally, you can autodiscover tasks:
+# celery_app.autodiscover_tasks(['ytgrid.backend.tasks'])

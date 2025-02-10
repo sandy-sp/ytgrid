@@ -1,22 +1,58 @@
-from ytgrid.backend.celery_app import celery_app
-from ytgrid.backend.task_manager import AUTOMATION_PLAYERS
-from ytgrid.utils.logger import log_info, log_error
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+import json
+import time
 
-@celery_app.task(name="ytgrid.tasks.run_automation")
-def run_automation(session_id, url, speed, loop_count, task_type):
+from ytgrid.backend.task_manager import task_manager
+
+router = APIRouter()
+
+class TaskStartRequest(BaseModel):
+    session_id: str
+    url: str
+    speed: float
+    loop_count: int
+    task_type: str = "video"  # default type
+
+class TaskStopRequest(BaseModel):
+    session_id: str
+
+@router.post("/", status_code=201)
+def start_task(request: TaskStartRequest):
+    success = task_manager.start_session(
+        session_id=request.session_id,
+        url=request.url,
+        speed=request.speed,
+        loop_count=request.loop_count,
+        task_type=request.task_type
+    )
+    if not success:
+        raise HTTPException(status_code=400, detail="Session already exists")
+    return {"message": f"Task {request.session_id} started."}
+
+@router.post("/stop", status_code=200)
+def stop_task(request: TaskStopRequest):
+    success = task_manager.stop_session(request.session_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"message": f"Task {request.session_id} stopped."}
+
+@router.get("/")
+def get_tasks():
+    active_sessions = task_manager.get_active_sessions()
+    return {"active_sessions": active_sessions}
+
+@router.get("/stream")
+def stream_tasks():
     """
-    Celery task to run automation using the selected automation player.
+    SSE endpoint to stream active session status updates every 5 seconds.
+    Clients can listen to this endpoint for real-time monitoring.
     """
-    player_class = AUTOMATION_PLAYERS.get(task_type)
-    if not player_class:
-        log_error(f"Unsupported task type: {task_type}")
-        return "error"
-    
-    for loop in range(loop_count):
-        log_info(f"Celery Task - Session {session_id}: Loop {loop+1}/{loop_count} - Playing {url} using '{task_type}' automation.")
-        player_instance = player_class()
-        # Each call plays one loop.
-        player_instance.play_video(url, speed, 1)
-    
-    log_info(f"Celery Task - Session {session_id}: All {loop_count} loops completed.")
-    return "completed"
+    def event_generator():
+        while True:
+            sessions = task_manager.get_active_sessions()
+            data = json.dumps({"active_sessions": sessions})
+            yield f"data: {data}\n\n"
+            time.sleep(5)
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

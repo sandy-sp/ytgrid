@@ -23,11 +23,9 @@ class Config:
     USE_TEMP_USER_DATA = os.getenv("YTGRID_USE_TEMP_USER_DATA", "True").lower() == "true"
     BROWSER_TIMEOUT = int(os.getenv("YTGRID_BROWSER_TIMEOUT", 20))
 
-    # Celery configuration flag
+    # Celery integration
     USE_CELERY = os.getenv("YTGRID_USE_CELERY", "False").lower() == "true"
-
-    # (Optional) Celery broker and result backend URLs
-    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
-    CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0")
+    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://redis:6379/0")
+    CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://redis:6379/0")
 
 config = Config()

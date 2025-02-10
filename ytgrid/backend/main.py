@@ -1,15 +1,16 @@
 # ytgrid/backend/main.py
+
 from fastapi import FastAPI
-from ytgrid.backend.routes import session  # This imports your session router
+from ytgrid.backend.routes import router  # Aggregated router for sessions and tasks
 
 app = FastAPI(
     title="YTGrid",
-    description="Enhanced version with abstract session storage",
+    description="Enhanced version with abstract session storage and automation capabilities.",
     version="2.0.0"
 )
 
-# Include the session routes under a common prefix
-app.include_router(session.router, prefix="/sessions", tags=["sessions"])
+# Include the aggregated routes
+app.include_router(router)
 
 @app.get("/")
 async def root():

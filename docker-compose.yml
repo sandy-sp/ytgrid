@@ -18,7 +18,6 @@ services:
       - YTGRID_WEBSOCKET_SERVER_URL=ws://127.0.0.1:8000/ws
       - YTGRID_USE_TEMP_USER_DATA=True
       - YTGRID_BROWSER_TIMEOUT=20
-      # Celery settings
       - YTGRID_USE_CELERY=True
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -45,7 +44,6 @@ services:
     ports:
       - "6379:6379"
 
-  # Optionally, add a Flower dashboard for monitoring Celery tasks:
   flower:
     image: mher/flower
     container_name: ytgrid_flower
@@ -56,3 +54,12 @@ services:
     depends_on:
       - redis
       - celery_worker
+
+  load_test:
+    build: .
+    container_name: ytgrid_load_test
+    command: python run_load_test.py
+    volumes:
+      - .:/app
+    depends_on:
+      - web
