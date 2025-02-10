@@ -16,7 +16,7 @@ class Config:
     MAX_CONCURRENT_SESSIONS = int(os.getenv("YTGRID_MAX_SESSIONS", 5))
 
     # WebSocket for real-time updates
-    ENABLE_REALTIME_UPDATES = os.getenv("YTGRID_REALTIME_UPDATES", "True").lower() == "true"
+    ENABLE_REALTIME_UPDATES = os.getenv("YTGRID_REALTIME_UPDATES", "False").lower() == "true"
     WEBSOCKET_SERVER_URL = os.getenv("YTGRID_WEBSOCKET_SERVER_URL", "ws://127.0.0.1:8000/ws")
 
     # Browser settings

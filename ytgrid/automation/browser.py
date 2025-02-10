@@ -1,3 +1,5 @@
+# ytgrid/automation/browser.py
+
 import tempfile
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -12,7 +14,7 @@ def get_browser(user_data_dir=None):
     
     options = Options()
 
-    # Set headless mode based on config
+    # Set headless mode based on configuration
     if config.HEADLESS_MODE:
         options.add_argument("--headless=new")
 
@@ -20,14 +22,13 @@ def get_browser(user_data_dir=None):
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
 
-    # Use a fresh browser session if enabled
+    # Use temporary user data directory if enabled
     if config.USE_TEMP_USER_DATA:
         user_data_dir = user_data_dir or tempfile.mkdtemp()
         options.add_argument(f"--user-data-dir={user_data_dir}")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
-
     wait = WebDriverWait(driver, 20)
 
     return driver, wait
