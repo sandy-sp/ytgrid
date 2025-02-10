@@ -1,2 +1,10 @@
 include README.md
 include LICENSE
+include pyproject.toml
+include poetry.lock
+recursive-include ytgrid *.py
+recursive-include tests *.py
+exclude .env
+exclude .gitignore
+exclude docker-compose.yml
+exclude Dockerfile

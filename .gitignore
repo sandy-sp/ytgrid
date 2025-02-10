@@ -8,3 +8,9 @@ __pycache__/
 dist/
 build/
 ytgrid.egg-info/
+.vscode/           
+.idea/             
+*.DS_Store         
+*.log             
+.coverage          
+node_modules/
