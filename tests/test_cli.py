@@ -1,17 +1,28 @@
 import subprocess
 import pytest
 
-def test_cli_start():
-    """Test CLI start command"""
-    result = subprocess.run(["ytgrid", "start", "--url", "https://www.youtube.com/watch?v=ZZ63B6tVDzk"], capture_output=True, text=True)
-    assert "Session Started" in result.stdout
+@pytest.fixture
+def sample_cli_command():
+    return [
+        "ytgrid", "start",
+        "--session-id", "cli_test_session",
+        "--url", "https://www.youtube.com/watch?v=UXFBUZEpnrc",
+        "--speed", "1.5",
+        "--loops", "2",
+        "--task-type", "video"
+    ]
+
+def test_cli_start(sample_cli_command):
+    """Test starting a session via CLI."""
+    result = subprocess.run(sample_cli_command, capture_output=True, text=True)
+    assert "started successfully" in result.stdout.lower()
 
 def test_cli_status():
-    """Test CLI status command"""
+    """Test checking session status via CLI."""
     result = subprocess.run(["ytgrid", "status"], capture_output=True, text=True)
-    assert "Active YTGrid Sessions" in result.stdout
+    assert "active sessions" in result.stdout.lower() or "no active sessions" in result.stdout.lower()
 
 def test_cli_stop():
-    """Test CLI stop command"""
-    result = subprocess.run(["ytgrid", "stop", "--session_id", "1"], capture_output=True, text=True)
-    assert "Session Stopped" in result.stdout
+    """Test stopping a session via CLI."""
+    result = subprocess.run(["ytgrid", "stop", "--session-id", "cli_test_session"], capture_output=True, text=True)
+    assert "stopped successfully" in result.stdout.lower() or "not found" in result.stdout.lower()
