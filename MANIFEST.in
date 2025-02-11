@@ -6,3 +6,4 @@ recursive-include ytgrid *.py
 recursive-include tests *.py
 exclude .env
 exclude .gitignore
+exclude .github
