@@ -3,7 +3,7 @@ name: 📦 Publish to PyPI & Create GitHub Release
 on:
   push:
     tags:
-      - "v*.0.0"  # Runs when a versioned tag like v2.0.0 is pushed
+      - "v*"  # Runs when a versioned tag like v2.0.0 is pushed
 
 permissions:
   contents: write  # Needed for creating GitHub Releases
