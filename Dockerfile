@@ -23,7 +23,7 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
     && rm -rf /var/lib/apt/lists/*
 
 # Install YTGrid from PyPI
-RUN pip install ytgrid
+RUN pip install --no-cache-dir ytgrid
 
 # Set working directory
 WORKDIR /app
