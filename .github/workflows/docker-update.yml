@@ -1,0 +1,49 @@
+name: 🐳 Build & Push Docker Image (On Docker File Changes)
+
+on:
+  push:
+    branches:
+      - main  # Only trigger when pushing to main branch
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.yml'
+      - 'supervisord.conf'  # Tracks changes in process management
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-and-push:
+    name: 🚀 Build & Publish Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛠️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐳 Log in to Docker Hub
+        run: echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: 🔑 Log in to GitHub Container Registry
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+      - name: 🏗️ Build Docker Image
+        run: |
+          IMAGE_NAME=ytgrid
+
+          # Build image with latest PyPI package
+          docker build -t $DOCKER_HUB_USERNAME/$IMAGE_NAME:latest .
+          docker build -t ghcr.io/$GITHUB_REPOSITORY:latest .
+
+      - name: 📤 Push to Docker Hub
+        run: |
+          IMAGE_NAME=ytgrid
+          docker push $DOCKER_HUB_USERNAME/$IMAGE_NAME:latest
+
+      - name: 📤 Push to GitHub Packages
+        run: |
+          IMAGE_NAME=ytgrid
+          docker push ghcr.io/$GITHUB_REPOSITORY:latest
