@@ -36,6 +36,12 @@ jobs:
           DOCKERHUB_USER="${{ secrets.DOCKER_HUB_USERNAME }}"  # Docker Hub username from secrets
           GHCR_USER="${{ github.repository_owner }}"  # GitHub Packages owner (from repository)
 
+          # Ensure DOCKER_HUB_USERNAME is not empty
+          if [[ -z "$DOCKERHUB_USER" ]]; then
+            echo "❌ ERROR: DOCKER_HUB_USERNAME is not set in GitHub Secrets!"
+            exit 1
+          fi
+
           DOCKERHUB_IMAGE="$DOCKERHUB_USER/$IMAGE_NAME"
           GHCR_IMAGE="ghcr.io/$GHCR_USER/$IMAGE_NAME"
 
@@ -47,11 +53,19 @@ jobs:
           docker build -t $DOCKERHUB_IMAGE:latest .
           docker build -t $GHCR_IMAGE:latest .
 
-
       - name: 📤 Push to Docker Hub
         run: |
           IMAGE_NAME=ytgrid
-          docker push $DOCKER_HUB_USERNAME/$IMAGE_NAME:latest
+          DOCKERHUB_USER="${{ secrets.DOCKER_HUB_USERNAME }}"
+          DOCKERHUB_IMAGE="$DOCKERHUB_USER/$IMAGE_NAME"
+
+          if [[ -z "$DOCKERHUB_USER" ]]; then
+            echo "❌ ERROR: DOCKER_HUB_USERNAME is not set in GitHub Secrets!"
+            exit 1
+          fi
+
+          echo "📤 Pushing Docker Image to Docker Hub: $DOCKERHUB_IMAGE:latest"
+          docker push $DOCKERHUB_IMAGE:latest
 
       - name: 📤 Push to GitHub Packages
         run: |
