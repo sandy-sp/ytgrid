@@ -1,6 +1,6 @@
 [project]
 name = "ytgrid"
-version = "2.0.0"
+version = "2.0.1"
 description = "YTGrid is a powerful, scalable, and flexible YT automation tool that enables looped playback, remote control, and real-time tracking using a hybrid CLI + API architecture. It integrates FastAPI for REST API control, Selenium for browser automation, and Python multiprocessing/Celery for concurrent tasks."
 authors = [
     { name = "Sandeep Paidipati", email = "sandeep.paidipati@gmail.com" }
