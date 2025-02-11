@@ -1,0 +1,51 @@
+name: 📦 Publish to PyPI & Create GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*.0.0"  # Runs when a versioned tag like v2.0.0 is pushed
+
+permissions:
+  contents: write  # Needed for creating GitHub Releases
+
+jobs:
+  build-and-publish:
+    name: 🚀 Build & Publish to PyPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛠️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 📦 Install Dependencies
+        run: poetry install --no-root --only main
+
+      - name: 🏗️ Build the Package
+        run: poetry build
+
+      - name: 🔑 Publish to PyPI
+        env:
+          POETRY_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: poetry publish --username __token__ --password "$POETRY_PYPI_TOKEN"
+
+      - name: 📂 Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+          tag_name: ${{ github.ref_name }}
+          name: "YTGrid Release ${{ github.ref_name }}"
+          body: "📦 This release includes the latest version of YTGrid.\n\nCheck the [README](README.md) for installation and usage instructions."
+          draft: false
+          prerelease: false
