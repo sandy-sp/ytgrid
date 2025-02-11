@@ -33,8 +33,12 @@ jobs:
       - name: 🏗️ Build Docker Image
         run: |
           IMAGE_NAME=ytgrid
-          DOCKERHUB_IMAGE="$DOCKER_HUB_USERNAME/$IMAGE_NAME"
+          DOCKERHUB_IMAGE="${{ secrets.DOCKER_HUB_USERNAME }}/$IMAGE_NAME"
           GHCR_IMAGE="ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME"
+
+          echo "🐳 Building Docker Images:"
+          echo "➡️ Docker Hub: $DOCKERHUB_IMAGE:latest"
+          echo "➡️ GHCR: $GHCR_IMAGE:latest"
 
           # Build image with latest PyPI package
           docker build -t $DOCKERHUB_IMAGE:latest .
