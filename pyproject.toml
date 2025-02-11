@@ -29,4 +29,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 ytgrid = "ytgrid.cli:app"
+fix_path = "ytgrid.utils.setup:fix_path"
 
