@@ -1,35 +1,55 @@
-# Use an official Python 3.12 slim image
-FROM python:3.12-slim AS base
+# Stage 1: Build Stage
+FROM python:3.12-slim AS builder
 
-# Install system dependencies needed for Chrome & Selenium
-RUN apt-get update && apt-get install -y \
+# Set working directory in the builder stage
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install build tools
+RUN pip install --upgrade pip setuptools wheel
+
+# Copy project metadata files
+COPY pyproject.toml poetry.lock* ./
+
+# Install project dependencies and package the project in editable mode (if desired)
+# This step installs the project into the builder environment.
+RUN pip install .
+
+# Stage 2: Final Image
+FROM python:3.12-slim
+
+# Set working directory in the final image
+WORKDIR /app
+
+# Install runtime dependencies (for Chrome/Selenium and general OS support)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     gnupg2 \
     unzip \
-    curl \
     libnss3 \
     libx11-xcb1 \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
-    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
+# Copy installed Python packages from the builder stage
+COPY --from=builder /usr/local /usr/local
 
-# Install YTGrid from PyPI
-RUN pip install --no-cache-dir ytgrid
+# Copy the rest of the application code
+COPY . .
 
-# Set working directory
-WORKDIR /app
+# Expose the API port
+EXPOSE 8000
 
-# Copy the Supervisor configuration file
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Set environment variables for Python and logging
+ENV PYTHONUNBUFFERED=1
 
-# Use Supervisor as the entrypoint
-ENTRYPOINT ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Command to run the FastAPI application using Uvicorn
+CMD ["uvicorn", "ytgrid.backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

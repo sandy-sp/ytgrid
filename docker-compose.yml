@@ -1,19 +1,34 @@
 services:
   ytgrid:
     build: .
-    container_name: ytgrid_cli
-    stdin_open: true  # Keep terminal open
-    tty: true  # Allow interactive mode
-    volumes:
-      - .:/app  # Mount local files into the container
+    container_name: ytgrid_api
     ports:
-      - "8000:8000"  # Expose FastAPI backend
+      - "8000:8000"
     environment:
+      # General settings
       - YTGRID_HEADLESS_MODE=True
       - YTGRID_DEFAULT_SPEED=1.0
       - YTGRID_DEFAULT_LOOP_COUNT=1
       - YTGRID_MAX_SESSIONS=5
+      # Real-time updates
+      - YTGRID_REALTIME_UPDATES=False
+      - YTGRID_WEBSOCKET_SERVER_URL=ws://web:8000/ws
+      # Browser settings
       - YTGRID_USE_TEMP_USER_DATA=True
       - YTGRID_BROWSER_TIMEOUT=20
+      # Celery configuration
       - YTGRID_USE_CELERY=False
-    entrypoint: ["/bin/sh"]
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      # Session storage option
+      - YTGRID_SESSION_STORAGE=sqlite
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:6-alpine
+    container_name: ytgrid_redis
+    ports:
+      - "6379:6379"
