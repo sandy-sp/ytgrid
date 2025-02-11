@@ -37,6 +37,41 @@ pip install ytgrid
 
 ---
 
+## **🐳 Running YTGrid via Docker**
+
+You can also run YTGrid inside a **Docker container**.
+
+### **1️⃣ Build the Docker Image**
+
+```bash
+bashCopyEditdocker compose build
+```
+
+### **2️⃣ Start the Container**
+
+```bash
+bashCopyEditdocker compose up -d
+```
+
+✅ This will start:
+
+- The **FastAPI backend** in the background.
+- A **fully interactive shell** for running `ytgrid` CLI commands.
+
+### **3️⃣ Open an Interactive Shell**
+
+```bash
+bashCopyEditdocker exec -it ytgrid_cli /bin/sh
+```
+
+Now, you can run:
+
+```bash
+bashCopyEditytgrid --help
+```
+
+---
+
 ## **🚀 CLI Usage**
 YTGrid provides a **command-line interface (CLI)** to manage automation.
 
@@ -83,6 +118,17 @@ curl -X POST "http://127.0.0.1:8000/sessions/stop" \
      -H "Content-Type: application/json" \
      -d '{"session_id": 1}'
 ```
+
+---
+## **🛠️ Running External Scripts in Docker**
+
+To execute external scripts like `test.py` inside the container:
+
+```bash
+bashCopyEditdocker exec -it ytgrid_cli python test.py
+```
+
+✅ This will start **external scripts automation sessions in parallel**.
 
 ---
 

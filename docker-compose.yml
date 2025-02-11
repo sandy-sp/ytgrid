@@ -1,0 +1,19 @@
+services:
+  ytgrid:
+    build: .
+    container_name: ytgrid_cli
+    stdin_open: true  # Keep terminal open
+    tty: true  # Allow interactive mode
+    volumes:
+      - .:/app  # Mount local files into the container
+    ports:
+      - "8000:8000"  # Expose FastAPI backend
+    environment:
+      - YTGRID_HEADLESS_MODE=True
+      - YTGRID_DEFAULT_SPEED=1.0
+      - YTGRID_DEFAULT_LOOP_COUNT=1
+      - YTGRID_MAX_SESSIONS=5
+      - YTGRID_USE_TEMP_USER_DATA=True
+      - YTGRID_BROWSER_TIMEOUT=20
+      - YTGRID_USE_CELERY=False
+    entrypoint: ["/bin/sh"]

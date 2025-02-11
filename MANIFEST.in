@@ -7,3 +7,6 @@ recursive-include tests *.py
 exclude .env
 exclude .gitignore
 exclude .github
+exclude docker-compose.yml
+exclude Dockerfile
+exclude supervisord.conf
