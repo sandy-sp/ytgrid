@@ -1,13 +1,15 @@
 import multiprocessing
 import os
-from typing import Dict, Union, Any, List
+from typing import Dict, List, Optional
+
+from multiprocessing.sharedctypes import Synchronized
 
 from ytgrid.utils.logger import log_info, log_error
 from ytgrid.automation.player import VideoPlayer
 from ytgrid.utils.config import config
 
 # Mapping from task type to automation player class.
-AUTOMATION_PLAYERS: Dict[str, Any] = {
+AUTOMATION_PLAYERS: Dict[str, object] = {
     "video": VideoPlayer,
     # Future expansion: "batch": BatchPlayer, "channel": ChannelPlayer, etc.
 }
@@ -23,11 +25,11 @@ def kill_browser_processes() -> None:
 class TaskManager:
     """
     Manages automation sessions using either multiprocessing or Celery.
-    Future enhancements include dynamic scheduling based on system resource usage (see :contentReference[oaicite:1]{index=1}).
+    Future enhancements include dynamic scheduling based on system resource usage.
     """
     def __init__(self) -> None:
-        self.processes: Dict[str, Union[multiprocessing.Process, Any]] = {}  # {session_id: Process or Celery Task}
-        self.loop_counts: Dict[str, multiprocessing.Value] = {}  # {session_id: multiprocessing.Value}
+        self.processes: Dict[str, object] = {}  # {session_id: Process or Celery Task}
+        self.loop_counts: Dict[str, Synchronized] = {}  # {session_id: shared synchronized value}
 
     def start_session(
         self,
@@ -36,16 +38,17 @@ class TaskManager:
         speed: float,
         loop_count: int,
         task_type: str = "video",
-        use_celery: Union[bool, None] = None
+        use_celery: Optional[bool] = None
     ) -> bool:
         """
         Starts an automation session.
+
         :param session_id: Unique identifier for the session.
         :param url: URL of the video to be played.
         :param speed: Playback speed.
         :param loop_count: Total number of loops to run.
         :param task_type: Type of automation task (default "video").
-        :param use_celery: Optional flag to override the default Celery setting.
+        :param use_celery: Optional flag to override default Celery setting.
         :return: True if the session is started successfully, False otherwise.
         """
         if session_id in self.processes:
@@ -81,7 +84,7 @@ class TaskManager:
         url: str,
         speed: float,
         loop_count: int,
-        loop_counter: multiprocessing.Value,
+        loop_counter: Synchronized,
         task_type: str
     ) -> None:
         """
@@ -97,7 +100,7 @@ class TaskManager:
         url: str,
         speed: float,
         loop_count: int,
-        loop_counter: multiprocessing.Value,
+        loop_counter: Synchronized,
         task_type: str
     ) -> None:
         """
@@ -126,6 +129,7 @@ class TaskManager:
     def stop_session(self, session_id: str) -> bool:
         """
         Stops an active session and cleans up any running processes.
+
         :param session_id: The identifier of the session to stop.
         :return: True if the session was stopped, False otherwise.
         """
@@ -149,6 +153,7 @@ class TaskManager:
     def get_active_sessions(self) -> List[dict]:
         """
         Returns a list of active sessions along with their progress or status.
+
         :return: List of dictionaries, each representing a session.
         """
         active_sessions = []
