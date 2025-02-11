@@ -1,10 +1,9 @@
 services:
-  web:
+  ytgrid:
     build: .
-    container_name: ytgrid_web
-    command: uvicorn ytgrid.backend.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8000:8000"
+    container_name: ytgrid_cli
+    stdin_open: true  # Allow interactive CLI
+    tty: true  # Keep terminal open for CLI commands
     volumes:
       - .:/app
     environment:
@@ -16,60 +15,5 @@ services:
       - YTGRID_WEBSOCKET_SERVER_URL=ws://web:8000/ws
       - YTGRID_USE_TEMP_USER_DATA=True
       - YTGRID_BROWSER_TIMEOUT=20
-      - YTGRID_USE_CELERY=True
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  celery_worker:
-    build: .
-    container_name: ytgrid_celery_worker
-    command: celery -A ytgrid.backend.celery_app.celery_app worker --loglevel=info --uid=1000
-    volumes:
-      - .:/app
-    environment:
-      - YTGRID_USE_CELERY=True
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    depends_on:
-      - redis
-      - web
-
-  redis:
-    image: redis:7
-    container_name: ytgrid_redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-  flower:
-    image: mher/flower
-    container_name: ytgrid_flower
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-    ports:
-      - "5555:5555"
-    depends_on:
-      - redis
-      - celery_worker
-
-  load_test:
-    build: .
-    container_name: ytgrid_load_test
-    command: python run_load_test.py
-    volumes:
-      - .:/app
-    depends_on:
-      web:
-        condition: service_healthy
+      - YTGRID_USE_CELERY=False  # Celery is off by default
+    entrypoint: ["/bin/sh"]  # Start container with a shell for manual execution
