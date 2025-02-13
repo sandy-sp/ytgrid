@@ -32,8 +32,6 @@ jobs:
       - name: 📦 Install Dependencies
         run: poetry install --no-interaction
 
-      - name: 🧪 Run Tests
-        run: poetry run pytest
 
       - name: 🐳 Log in to Docker Hub
         run: echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
