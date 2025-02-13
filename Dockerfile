@@ -17,7 +17,6 @@ RUN pip install --upgrade pip setuptools wheel
 COPY pyproject.toml poetry.lock* ./
 
 # Install project dependencies and package the project in editable mode (if desired)
-# This step installs the project into the builder environment.
 RUN pip install .
 
 # Stage 2: Final Image
@@ -26,7 +25,7 @@ FROM python:3.12-slim
 # Set working directory in the final image
 WORKDIR /app
 
-# Install runtime dependencies (for Chrome/Selenium and general OS support)
+# Install runtime dependencies (for Chrome/Selenium and OS support)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     gnupg2 \

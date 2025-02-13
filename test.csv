@@ -1,0 +1,4 @@
+session_id,url,speed,loops,task_type
+batch_1,https://www.youtube.com/watch?v=OaOK76hiW8I,1.0,10,video
+batch_2,https://www.youtube.com/watch?v=1i4vVuXBeTg,1.5,10,video
+batch_3,https://www.youtube.com/watch?v=vcxHeOmQTag,2.0,10,video
