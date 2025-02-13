@@ -22,7 +22,8 @@ dependencies = [
     "celery",
     "redis",
     "typer",
-    "httpx"
+    "httpx",
+    "pytest"
 ]
 
 [build-system]
