@@ -2,10 +2,10 @@ include README.md
 include LICENSE
 include pyproject.toml
 include poetry.lock
+include .env
 recursive-include ytgrid *.py
 recursive-include tests *.py
 recursive-include tests *.csv
-exclude .env
 exclude .gitignore
 exclude .github
 exclude docker-compose.yml

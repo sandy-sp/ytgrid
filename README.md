@@ -3,28 +3,57 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
+[![Version](https://img.shields.io/badge/version-3.0.0-green)](https://github.com/sandy-sp/ytgrid/releases)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/ytgrid)](https://pypi.org/project/ytgrid/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/sandy1sp/ytgrid)](https://hub.docker.com/r/sandy1sp/ytgrid)
 
-YTGrid is a powerful, scalable, and flexible YT automation tool that enables looped playback, remote control, and real-time tracking using a hybrid **CLI + API architecture**. It integrates FastAPI for REST API control, Selenium for browser automation, and supports concurrent task execution via Python multiprocessing or Celery.
+
+YTGrid is a **powerful, scalable, and flexible** YouTube automation tool that enables **looped playback, remote control, and real-time tracking** using a **hybrid CLI + API architecture**.  
+
+It integrates **FastAPI** for REST API control, **Selenium** for browser automation, and supports concurrent task execution via **Python multiprocessing or Celery**.
 
 ---
 
 ## **📌 Features**
-
-- **Hybrid Interface** – Manage automation via **CLI + API**
-- **Scalable Execution** – Run multiple browser instances in parallel
-- **Configurable Automation** – Set playback speed, loop count, and more
-- **Celery Integration** – Supports both **multiprocessing & Celery** for task execution (Celery is disabled by default in the PyPI release)
-- **Real-time Updates** – Monitor active sessions via Server-Sent Events (SSE)
-- **Lightweight Installation** – Available as a **PyPI package**
+✅ **Hybrid Interface** – Manage automation via **CLI + API**  
+✅ **Scalable Execution** – Run multiple browser instances in parallel  
+✅ **Configurable Automation** – Set playback speed, loop count, and more  
+✅ **Celery Integration** – Supports **multiprocessing & Celery** (optional)  
+✅ **Real-time Updates** – Monitor active sessions via **WebSocket/SSE**  
+✅ **Lightweight Installation** – Available as a **PyPI package & Docker image**  
 
 ---
 
-## **📦 Installation (PyPI)**
 
+### **🔥 Key Improvements**
+✅ **Clearer Installation Instructions** (PyPI, Docker, Dev Setup)  
+✅ **Expanded CLI & API Examples** (With Expected Outputs)  
+✅ **Easier Configuration Guide** (Using `.env` File)  
+✅ **Structured Contribution Guidelines** (For Developers)  
+✅ **Added Future Roadmap** (Keeps Users Informed)
+
+---
+
+## **📦 Installation**
+### **1️⃣ Install via PyPI**
 YTGrid is available on PyPI. Install it using:
-
 ```bash
 pip install ytgrid
+````
+
+### **2️⃣ Install via Docker**
+
+```bash
+docker pull sandy1sp/ytgrid:latest
+docker run -p 8000:8000 sandy1sp/ytgrid:latest
+```
+
+### **3️⃣ Install from Source (Development)**
+
+```bash
+git clone https://github.com/sandy-sp/ytgrid.git
+cd ytgrid
+poetry install
 ```
 
 **Requirements:**
@@ -47,6 +76,8 @@ YTGrid provides a **command-line interface (CLI)** to manage automation sessions
 ytgrid start --session-id test123 --url "https://www.youtube.com/watch?v=UXFBUZEpnrc" --speed 1.5 --loops 3 
 ```
 
+💡 This command **starts an automation session** with a specified **session ID, URL, speed, and loop count**.
+
 - **session_id:** Unique identifier for the session (e.g., 'test123').
 - **url:** The YT video URL to automate.
 - **speed:** Playback speed multiplier (1.0 for normal speed).
@@ -59,7 +90,7 @@ ytgrid start --session-id test123 --url "https://www.youtube.com/watch?v=UXFBUZE
 ytgrid status
 ```
 
-This command displays all active sessions along with their current loop progress.
+✅ This command displays all active sessions along with their current loop progress.
 
 ### **Stop a Session**
 
@@ -67,7 +98,7 @@ This command displays all active sessions along with their current loop progress
 ytgrid stop --session-id test123
 ```
 
-Stop a running session by specifying its unique session_id.
+🚀 Stops the automation session with the given `session-id`.
 
 ### **Batch Process Sessions**
 
@@ -75,7 +106,7 @@ Stop a running session by specifying its unique session_id.
 ytgrid batch tasks.csv --delimiter ","
 ```
 
-- The CSV file (`tasks.csv`) should have a header row with columns: `session_id, url, speed, loops, task_type`.
+- 📂 The CSV file (`tasks.csv`) should have a header row with columns: `session_id, url, speed, loops, task_type`.
 - This command starts multiple sessions concurrently based on the CSV content.
 
 ### **Toggle Celery Mode**
@@ -84,7 +115,7 @@ ytgrid batch tasks.csv --delimiter ","
 ytgrid toggle-celery
 ```
 
-Toggle the `YTGRID_USE_CELERY` setting in your `.env` file (switching Celery on or off) without manually editing the file.
+🔄 Enables or disables **Celery** mode without manually editing the `.env` file.
 
 ---
 
