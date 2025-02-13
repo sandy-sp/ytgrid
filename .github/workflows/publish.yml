@@ -47,5 +47,4 @@ jobs:
           name: "YTGrid Release ${{ github.ref_name }}"
           body: "📦 This release includes the latest version of YTGrid.\n\nCheck the [README](README.md) for installation and usage instructions."
           draft: false
-          prerelease: false
-          
+          prerelease: false        
