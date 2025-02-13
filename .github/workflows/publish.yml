@@ -1,4 +1,4 @@
-name: 📦 Publish to PyPI & Create GitHub Release
+name: 📦 Test & Publish to PyPI & Create GitHub Release
 
 on:
   push:
@@ -9,8 +9,8 @@ permissions:
   contents: write  # Needed for creating GitHub Releases
 
 jobs:
-  build-and-publish:
-    name: 🚀 Build & Publish to PyPI
+  test:
+    name: ✅ Run Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -26,8 +26,34 @@ jobs:
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: 📦 Install Dependencies
-        run: poetry install --no-root --only main
+
+      - name: 📦 Install Dependencies (from poetry.lock)
+        run: poetry install --no-root --with dev  # ✅ Uses poetry.lock for stability
+
+      - name: 🧪 Run Tests
+        run: poetry run pytest tests --disable-warnings
+
+  build-and-publish:
+    name: 🚀 Build & Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: test  # ✅ Only run if tests pass
+
+    steps:
+      - name: 🛠️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 📦 Install Dependencies (from poetry.lock)
+        run: poetry install --no-root --only main  # ✅ Uses poetry.lock
 
       - name: 🏗️ Build the Package
         run: poetry build
@@ -47,4 +73,4 @@ jobs:
           name: "YTGrid Release ${{ github.ref_name }}"
           body: "📦 This release includes the latest version of YTGrid.\n\nCheck the [README](README.md) for installation and usage instructions."
           draft: false
-          prerelease: false        
+          prerelease: false
