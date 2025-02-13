@@ -30,7 +30,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: 📦 Install Dependencies (Poetry)
-        run: poetry install --no-interaction --only main
+        run: poetry install --no-interaction --with dev 
 
       - name: 🧪 Run Tests (Mocked)
         run: poetry run pytest tests --disable-warnings
