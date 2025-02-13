@@ -1,16 +1,6 @@
 __pycache__/
-*.pyc
-*.pyo
-*.log
-.env
-*.sqlite3
-*.db
 dist/
 build/
 ytgrid.egg-info/
-.vscode/           
-.idea/             
-*.DS_Store         
+.vscode/                  
 *.log             
-.coverage          
-node_modules/

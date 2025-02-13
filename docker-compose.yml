@@ -5,25 +5,22 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # General settings
+      # General settings (adjust as needed)
       - YTGRID_HEADLESS_MODE=True
       - YTGRID_DEFAULT_SPEED=1.0
       - YTGRID_DEFAULT_LOOP_COUNT=1
-      - YTGRID_MAX_SESSIONS=5
+      - YTGRID_MAX_SESSIONS=10
       # Real-time updates
       - YTGRID_REALTIME_UPDATES=False
       - YTGRID_WEBSOCKET_SERVER_URL=ws://web:8000/ws
       # Browser settings
       - YTGRID_USE_TEMP_USER_DATA=True
       - YTGRID_BROWSER_TIMEOUT=20
-      # Celery configuration
-      - YTGRID_USE_CELERY=False
+      # Celery configuration: enable if you want to test Celery with Redis
+      - YTGRID_USE_CELERY=True
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      # Session storage option
-      - YTGRID_SESSION_STORAGE=sqlite
-    volumes:
-      - .:/app
+      # Optionally, any other environment variables can be set here.
     depends_on:
       - redis
 

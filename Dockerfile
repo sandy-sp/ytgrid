@@ -1,31 +1,10 @@
-# Stage 1: Build Stage
-FROM python:3.12-slim AS builder
-
-# Set working directory in the builder stage
-WORKDIR /app
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Upgrade pip and install build tools
-RUN pip install --upgrade pip setuptools wheel
-
-# Copy project metadata files
-COPY pyproject.toml poetry.lock* ./
-
-# Install project dependencies and package the project in editable mode (if desired)
-RUN pip install .
-
-# Stage 2: Final Image
+# Use an official Python 3.12 slim image as the base for the final production image.
 FROM python:3.12-slim
 
-# Set working directory in the final image
+# Set the working directory
 WORKDIR /app
 
-# Install runtime dependencies (for Chrome/Selenium and OS support)
+# Install runtime dependencies needed for Chrome/Selenium and general OS support.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     gnupg2 \
@@ -37,18 +16,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrandr2 \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
+    
+# Install Google Chrome
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update && apt-get install -y google-chrome-stable
 
-# Copy installed Python packages from the builder stage
-COPY --from=builder /usr/local /usr/local
-
-# Copy the rest of the application code
-COPY . .
+# Install the ytgrid package from PyPI.
+RUN pip install --no-cache-dir ytgrid
 
 # Expose the API port
 EXPOSE 8000
 
-# Set environment variables for Python and logging
-ENV PYTHONUNBUFFERED=1
-
-# Command to run the FastAPI application using Uvicorn
+# Start the FastAPI application using Uvicorn.
 CMD ["uvicorn", "ytgrid.backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
