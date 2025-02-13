@@ -2,11 +2,13 @@ name: 📦 Test & Publish to PyPI & Create GitHub Release
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - "v*"  # Runs when a versioned tag like v2.0.0 is pushed
+      - "v*"
 
 permissions:
-  contents: write  # Needed for creating GitHub Releases
+  contents: write
 
 jobs:
   test:
@@ -27,8 +29,10 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: 📦 Install Dependencies (from poetry.lock)
-        run: poetry install --no-root --with dev  # ✅ Uses poetry.lock for stability
+      - name: 📦 Install Dependencies (with Dev)
+        run: |
+          poetry install --with dev
+          poetry run pip install --editable .  # ✅ Fix: Ensures ytgrid is installed
 
       - name: 🧪 Run Tests
         run: poetry run pytest tests --disable-warnings
@@ -53,7 +57,9 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: 📦 Install Dependencies (from poetry.lock)
-        run: poetry install --no-root --only main  # ✅ Uses poetry.lock
+        run: |
+          poetry install --no-root --only main
+          poetry run pip install --editable .  # ✅ Fix: Ensures ytgrid is installed
 
       - name: 🏗️ Build the Package
         run: poetry build
