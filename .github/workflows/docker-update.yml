@@ -12,12 +12,28 @@ on:
 
 jobs:
   build-and-push:
-    name: 🚀 Build & Publish Docker Image
+    name: 🚀 Build, Test & Publish Docker Image
     runs-on: ubuntu-latest
 
     steps:
       - name: 🛠️ Checkout Repository
         uses: actions/checkout@v4
+
+      - name: 🐍 Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 📦 Install Dependencies
+        run: poetry install --no-interaction
+
+      - name: 🧪 Run Tests
+        run: poetry run pytest
 
       - name: 🐳 Log in to Docker Hub
         run: echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
@@ -30,26 +46,20 @@ jobs:
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
-      - name: 🏗️ Build Docker Image
+      - name: 🏗️ Build Docker Images
         run: |
           IMAGE_NAME=ytgrid
-          DOCKERHUB_USER="${{ secrets.DOCKER_HUB_USERNAME }}"  # Docker Hub username from secrets
-          GHCR_USER="${{ github.repository_owner }}"  # GitHub Packages owner (from repository)
-
-          # Ensure DOCKER_HUB_USERNAME is not empty
+          DOCKERHUB_USER="${{ secrets.DOCKER_HUB_USERNAME }}"
+          GHCR_USER="${{ github.repository_owner }}"
           if [[ -z "$DOCKERHUB_USER" ]]; then
             echo "❌ ERROR: DOCKER_HUB_USERNAME is not set in GitHub Secrets!"
             exit 1
           fi
-
           DOCKERHUB_IMAGE="$DOCKERHUB_USER/$IMAGE_NAME"
           GHCR_IMAGE="ghcr.io/$GHCR_USER/$IMAGE_NAME"
-
           echo "🐳 Building Docker Images:"
           echo "➡️ Docker Hub: $DOCKERHUB_IMAGE:latest"
           echo "➡️ GHCR: $GHCR_IMAGE:latest"
-
-          # Build images
           docker build -t $DOCKERHUB_IMAGE:latest .
           docker build -t $GHCR_IMAGE:latest .
 
@@ -58,16 +68,14 @@ jobs:
           IMAGE_NAME=ytgrid
           DOCKERHUB_USER="${{ secrets.DOCKER_HUB_USERNAME }}"
           DOCKERHUB_IMAGE="$DOCKERHUB_USER/$IMAGE_NAME"
-
           if [[ -z "$DOCKERHUB_USER" ]]; then
             echo "❌ ERROR: DOCKER_HUB_USERNAME is not set in GitHub Secrets!"
             exit 1
           fi
-
           echo "📤 Pushing Docker Image to Docker Hub: $DOCKERHUB_IMAGE:latest"
           docker push $DOCKERHUB_IMAGE:latest
 
-      - name: 📤 Push to GitHub Packages
+      - name: 📤 Push to GitHub Container Registry
         run: |
           IMAGE_NAME=ytgrid
           docker push ghcr.io/$GITHUB_REPOSITORY:latest

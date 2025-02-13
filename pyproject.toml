@@ -21,7 +21,8 @@ dependencies = [
     "beautifulsoup4", 
     "celery",
     "redis",
-    "typer"
+    "typer",
+    "httpx"
 ]
 
 [build-system]
@@ -31,4 +32,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 ytgrid = "ytgrid.cli:app"
 fix_path = "ytgrid.utils.setup:fix_path"
+
+[tool.poetry.group.dev.dependencies]
+httpx = "^0.28.1"
+typer = "^0.15.1"
 
