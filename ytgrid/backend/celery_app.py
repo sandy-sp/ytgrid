@@ -1,5 +1,5 @@
 """
-Celery App Initialization for YTGrid (Version 3)
+Celery App Initialization for YTGrid (Version 3.1)
 
 This module configures and initializes the Celery application using broker and result backend
 settings from the configuration. It also ensures that the tasks module is imported so that

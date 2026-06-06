@@ -1,338 +1,341 @@
 
-# 🎥 YTGrid - Hybrid CLI + API for Scalable YT Automation
+# 🎥 YTGrid — Hybrid CLI + API for Scalable YT Automation
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/version-3.0.0-green)](https://github.com/sandy-sp/ytgrid/releases)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![Version](https://img.shields.io/badge/version-3.1.0-green)](https://github.com/sandy-sp/ytgrid/releases)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/ytgrid)](https://pypi.org/project/ytgrid/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/sandy1sp/ytgrid)](https://hub.docker.com/r/sandy1sp/ytgrid)
 
+YTGrid is a **powerful, scalable, and flexible** YouTube automation tool that enables **looped playback, remote control, and real-time tracking** through a **hybrid CLI + API architecture**.
 
-YTGrid is a **powerful, scalable, and flexible** YouTube automation tool that enables **looped playback, remote control, and real-time tracking** using a **hybrid CLI + API architecture**.  
-
-It integrates **FastAPI** for REST API control, **Selenium** for browser automation, and supports concurrent task execution via **Python multiprocessing or Celery**.
-
----
-
-## **📌 Features**
-✅ **Hybrid Interface** – Manage automation via **CLI + API**  
-✅ **Scalable Execution** – Run multiple browser instances in parallel  
-✅ **Configurable Automation** – Set playback speed, loop count, and more  
-✅ **Celery Integration** – Supports **multiprocessing & Celery** (optional)  
-✅ **Real-time Updates** – Monitor active sessions via **WebSocket/SSE**  
-✅ **Lightweight Installation** – Available as a **PyPI package & Docker image**  
+It combines **FastAPI** for REST control, **Selenium** for browser automation, **Python multiprocessing or Celery** for concurrent execution, and a **SQLite-backed persistence layer** for reusable execution profiles.
 
 ---
 
+## ✨ Features
 
-### **🔥 Key Improvements**
-✅ **Clearer Installation Instructions** (PyPI, Docker, Dev Setup)  
-✅ **Expanded CLI & API Examples** (With Expected Outputs)  
-✅ **Easier Configuration Guide** (Using `.env` File)  
-✅ **Structured Contribution Guidelines** (For Developers)  
-✅ **Added Future Roadmap** (Keeps Users Informed)
+### Core
+- **Hybrid Interface** – manage automation via CLI, REST API, or web dashboard.
+- **Scalable Execution** – run multiple browser instances in parallel via multiprocessing or Celery.
+- **Configurable Automation** – playback speed, loop count, task type.
+- **Real-time Updates** – live session status via Server-Sent Events.
+
+### v3.1 additions
+- **🔐 API key authentication** – every endpoint protected by `X-API-Key` header (or `api_key` query param for browser EventSource).
+- **🗂️ Execution profiles** – save named playlists of URLs + parameters in SQLite; rerun on demand from the CLI or API.
+- **🎛️ Web dashboard** – live session table and task launcher at `/static/index.html`; advanced analytics remain on the roadmap.
+- **🌐 Optional proxy rotation** – file/env proxy sources, weighted selection, and background health checks; dashboard proxy panels remain on the roadmap.
+- **🧹 Resource optimizer** – background tmp-dir cleaner, orphan-only zombie reaper (`ppid==1` Chrome processes), system-load throttling of new sessions.
+- **📺 Playlist & channel automation** – new `task_type=playlist` / `channel`; URLs resolved via `yt-dlp`.
+- **🐳 Split Docker images** – `Dockerfile.api` (FastAPI only) and `Dockerfile.worker` (Chrome + Celery worker) for microservice deployment.
+- **🛡️ Hardened defaults** – input validation, process-group cleanup, isolated browser profiles (0o700), WAL journaling, lifespan-managed startup/shutdown.
 
 ---
 
-## **📦 Installation**
-### **1️⃣ Install via PyPI**
-YTGrid is available on PyPI. Install it using:
+## 📦 Installation
+
+### 1️⃣ PyPI
+
 ```bash
 pip install ytgrid
-````
+```
 
-### **2️⃣ Install via Docker**
+### 2️⃣ Docker
 
 ```bash
 docker pull sandy1sp/ytgrid:latest
-docker run -p 8000:8000 sandy1sp/ytgrid:latest
+docker run -p 8000:8000 -e YTGRID_API_KEY=$(openssl rand -hex 32) sandy1sp/ytgrid:latest
 ```
 
-### **3️⃣ Install from Source (Development)**
+### 3️⃣ From source (development)
 
 ```bash
 git clone https://github.com/sandy-sp/ytgrid.git
 cd ytgrid
 poetry install
+cp .env.example .env
+# generate an API key
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+# paste it into .env as YTGRID_API_KEY=...
 ```
 
-**Requirements:**
-
-- **Python 3.8+**
-- **Google Chrome:** *For the PyPI version, you must have Google Chrome installed on your system. ChromeDriver is automatically managed by `webdriver-manager`, but the Chrome browser itself is not bundled with YTGrid.*
-- **ChromeDriver:** Automatically managed by `webdriver-manager`
-- **Redis:** Only required if you choose to enable Celery (Celery is off by default)
+**Requirements**
+- **Python 3.10+**
+- **Google Chrome** – required for the PyPI install; bundled in the Docker image.
+- **ChromeDriver** – managed automatically by `webdriver-manager`.
+- **Redis** – only needed if Celery is enabled.
 
 ---
 
+## 🔐 Authentication
 
-## **🚀 CLI Usage**
-
-YTGrid provides a **command-line interface (CLI)** to manage automation sessions.
-
-### **Start a Session**
+When `YTGRID_API_KEY` is set, every endpoint (except `/`, `/health`, and static assets) requires the key:
 
 ```bash
-ytgrid start --session-id test123 --url "https://www.youtube.com/watch?v=UXFBUZEpnrc" --speed 1.5 --loops 3 
+curl -H "X-API-Key: $YTGRID_API_KEY" http://127.0.0.1:8000/tasks/
 ```
 
-💡 This command **starts an automation session** with a specified **session ID, URL, speed, and loop count**.
+The CLI reads the key from the same `.env` and forwards it automatically.
+Browser dashboard EventSource connections may pass the key as `?api_key=<key>` since browsers cannot set custom headers on `EventSource`.
 
-- **session_id:** Unique identifier for the session (e.g., 'test123').
-- **url:** The YT video URL to automate.
-- **speed:** Playback speed multiplier (1.0 for normal speed).
-- **loops:** Number of times to loop the video.
-- **task_type:** Type of automation task (default is 'video').
+When `YTGRID_API_KEY` is **unset**, auth is disabled (useful for local development).
 
-### **Check Active Sessions**
+---
+
+## 🚀 CLI Usage
+
+### Start a session
+
+```bash
+ytgrid start --url "https://www.youtube.com/watch?v=UXFBUZEpnrc" --speed 1.5 --loops 3
+```
+
+`--session-id` is now optional — a short id is auto-generated when omitted.
+
+### Status
 
 ```bash
 ytgrid status
 ```
 
-✅ This command displays all active sessions along with their current loop progress.
-
-### **Stop a Session**
+### Stop a session
 
 ```bash
-ytgrid stop --session-id test123
+ytgrid stop --session-id abc12345
 ```
 
-🚀 Stops the automation session with the given `session-id`.
-
-### **Batch Process Sessions**
+### Batch (CSV)
 
 ```bash
 ytgrid batch tasks.csv --delimiter ","
 ```
 
-- 📂 The CSV file (`tasks.csv`) should have a header row with columns: `session_id, url, speed, loops, task_type`.
-- This command starts multiple sessions concurrently based on the CSV content.
+CSV header: `session_id, url, speed, loops, task_type`.
 
-### **Toggle Celery Mode**
+### Profiles (new in v3.1)
+
+```bash
+ytgrid profile create "morning-mix" --description "Daily wake-up playlist"
+ytgrid profile add   "morning-mix" --url "https://www.youtube.com/watch?v=UXFBUZEpnrc" --loops 2
+ytgrid profile add   "morning-mix" --url "https://www.youtube.com/watch?v=OaOK76hiW8I" --speed 1.5
+ytgrid profile list
+ytgrid profile run   "morning-mix"
+```
+
+### Dashboard server
+
+```bash
+ytgrid server
+# → http://127.0.0.1:8000/static/index.html
+```
+
+### Toggle Celery
 
 ```bash
 ytgrid toggle-celery
 ```
 
-🔄 Enables or disables **Celery** mode without manually editing the `.env` file.
+---
+
+## 🖥️ REST API
+
+All examples assume `YTGRID_API_KEY` is set; substitute your own key.
+
+### Start a task
+
+```bash
+curl -X POST http://127.0.0.1:8000/tasks/ \
+     -H "X-API-Key: $YTGRID_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"url": "https://www.youtube.com/watch?v=OaOK76hiW8I", "speed": 1.5, "loop_count": 3}'
+```
+
+### List active tasks
+
+```bash
+curl -H "X-API-Key: $YTGRID_API_KEY" http://127.0.0.1:8000/tasks/
+```
+
+### Stop a task
+
+```bash
+curl -X POST http://127.0.0.1:8000/tasks/stop \
+     -H "X-API-Key: $YTGRID_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"session_id": "abc12345"}'
+```
+
+### Profiles
+
+```bash
+# create
+curl -X POST http://127.0.0.1:8000/profiles/ \
+     -H "X-API-Key: $YTGRID_API_KEY" -H "Content-Type: application/json" \
+     -d '{"name": "morning-mix", "description": "wake up"}'
+
+# add entry
+curl -X POST http://127.0.0.1:8000/profiles/1/entries \
+     -H "X-API-Key: $YTGRID_API_KEY" -H "Content-Type: application/json" \
+     -d '{"video_url": "https://www.youtube.com/watch?v=OaOK76hiW8I", "speed": 1.0, "loop_count": 2}'
+
+# run all entries
+curl -X POST http://127.0.0.1:8000/profiles/morning-mix/run \
+     -H "X-API-Key: $YTGRID_API_KEY"
+```
+
+### Streaming endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /tasks/stream`     | SSE — active session updates every 5 s (auth required) |
+| `GET /dashboard/stream` | SSE — dashboard payload every 2 s (auth required; supports `?api_key=`) |
+
+Both cap at 10 concurrent connections and 1 h max duration.
 
 ---
 
-## 🐳 Running YTGrid via Docker
+## 🎛️ Web Dashboard
 
-YTGrid can be deployed using Docker, which allows you to run the application along with its dependencies in a containerized environment. We offer two primary ways to obtain the Docker image:
+Open `http://127.0.0.1:8000/static/index.html` after starting the server. The dashboard shows live sessions, system health, and a "Launch Task" form. On first load it prompts for the API key (stored in `localStorage`).
 
-### 1. Building the Image Locally
+For the full shipped-app summary, current limitations, and release evidence, see [`docs/APP_OVERVIEW.md`](docs/APP_OVERVIEW.md).
 
-Use the provided Dockerfile to build a lean, production-ready image that installs YTGrid from PyPI and includes all necessary dependencies (including Google Chrome).
+---
+
+## 🌐 Proxy Rotation (optional)
+
+Enable in `.env`:
+
+```ini
+YTGRID_PROXY_ENABLED=True
+YTGRID_PROXY_SOURCE=file
+YTGRID_PROXY_FILE=./proxies.txt
+```
+
+`proxies.txt` format (one per line):
+
+```
+host:port
+host:port:user:pass
+```
+
+The pool selects proxies by a weighted score (latency × reliability × idle-time), runs a background health checker, and reports per-session success/failure.
+
+---
+
+## 🧹 Resource Optimizer
+
+Runs three background threads when the API is up:
+
+| Job | Interval | Action |
+|-----|----------|--------|
+| TmpCleaner   | 5 min  | Deletes `/tmp/ytgrid_*` dirs older than `YTGRID_TMP_MAX_AGE` |
+| ZombieReaper | 1 min  | SIGTERMs **orphaned** Chrome processes (`ppid==1`, current UID, >10 min old) |
+| SystemMonitor | 30 s  | Samples CPU/mem/disk; throttles new sessions when load is high |
+
+Disable with `YTGRID_OPTIMIZER_ENABLED=False`.
+
+---
+
+## 🐳 Docker
+
+### Single container
 
 ```bash
 docker build -t ytgrid .
+docker run -p 8000:8000 -e YTGRID_API_KEY=$(openssl rand -hex 32) ytgrid
 ```
 
-Then, run the container:
-
-```bash
-docker run -p 8000:8000 ytgrid
-```
-
-Or, for an orchestrated setup with Redis (for optional Celery support), use docker-compose:
+### Split API + worker (recommended)
 
 ```bash
 docker-compose up --build
 ```
 
-### 2. Pulling Prebuilt Images
+This brings up:
+- `ytgrid_api` — FastAPI gateway ([Dockerfile.api](Dockerfile.api))
+- `ytgrid_worker` — Celery worker with Chrome ([Dockerfile.worker](Dockerfile.worker))
+- `redis` — broker / result backend
 
-You can also pull the latest prebuilt Docker image directly from our registries:
-
-#### Docker Hub
-
-Pull the image from Docker Hub:
-
-```bash
-docker pull sandy1sp/ytgrid:latest
-```
-
-Then run the container:
+Docker Compose requires an API key because it publishes the API port:
 
 ```bash
-docker run -p 8000:8000 sandy1sp/ytgrid:latest
+export YTGRID_API_KEY=$(openssl rand -hex 32)
+docker-compose up --build
 ```
 
-#### GitHub Container Registry (GHCR)
+---
 
-Alternatively, pull the image from GHCR:
+## 🛠️ Configuration (`.env`)
+
+See [.env.example](.env.example) for the full template.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `YTGRID_API_KEY` | *(empty = auth disabled)* | API authentication key |
+| `YTGRID_HEADLESS_MODE` | `True` | Chrome headless toggle |
+| `YTGRID_DEFAULT_SPEED` / `YTGRID_DEFAULT_LOOP_COUNT` | `1.0` / `1` | CLI defaults |
+| `YTGRID_MAX_SESSIONS` | `5` | Concurrency cap |
+| `YTGRID_BROWSER_TIMEOUT` | `20` | Selenium implicit wait (s) |
+| `YTGRID_DB_PATH` | `ytgrid/ytgrid.db` | SQLite path for profiles + history |
+| `YTGRID_USE_CELERY` | `False` | Use Celery instead of multiprocessing |
+| `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` | `redis://localhost:6379/0` | Celery transport |
+| `YTGRID_OPTIMIZER_ENABLED` | `True` | Enable background optimizer |
+| `YTGRID_TMP_MAX_AGE` | `1800` | Stale tmp-dir age threshold (s) |
+| `YTGRID_PROXY_ENABLED` | `False` | Route Chrome through rotating proxies |
+| `YTGRID_PROXY_SOURCE` | `file` | `file` / `env` / `api` |
+| `YTGRID_PROXY_FILE` | `./proxies.txt` | Proxy list path |
+| `YTGRID_PROXY_COOLDOWN_SECONDS` | `300` | Per-proxy cooldown after selection |
+| `YTGRID_PROXY_HEALTH_CHECK_INTERVAL` | `60` | Health-check loop interval (s) |
+| `YTGRID_PROXY_MAX_FAILURE_RATE` | `0.3` | Health threshold |
+
+---
+
+## 🧪 Testing
 
 ```bash
-docker pull ghcr.io/sandy-sp/ytgrid:latest
+poetry install --with dev
+poetry run pytest
 ```
 
-Then run the container:
+For step-by-step manual end-to-end checks see [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md).
 
-```bash
-docker run -p 8000:8000 ghcr.io/sandy-sp/ytgrid:latest
-```
-
----
-
-## 🔄 Using Redis for Celery Implementation
-
-YTGrid supports distributed task processing using Celery. Although Celery is disabled by default in the PyPI release, you can enable it in a Docker environment for advanced use cases. When Celery is enabled, a Redis server is required as the message broker and result backend.
-
-### Enabling Celery in Docker
-
-In the `docker-compose.yml` file, Redis is defined as a service. To enable Celery:
-
-1. **Set Environment Variables:**  
-   Ensure that the following environment variables are set (as shown in the `docker-compose.yml`):
-
-   ```yaml
-   - YTGRID_USE_CELERY=True
-   - CELERY_BROKER_URL=redis://redis:6379/0
-   - CELERY_RESULT_BACKEND=redis://redis:6379/0
-   ```
-
-2. **Run docker-compose:**  
-   Start the services with:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-   This will start both the YTGrid container and the Redis container. The YTGrid application will then use Celery with Redis for task management.
-
-3. **Verify Celery Operation:**  
-   You can run a Celery worker by executing:
-
-   ```bash
-   docker exec -it ytgrid_api celery -A ytgrid.backend.celery_app worker --loglevel=info
-   ```
-
-   This worker will connect to the Redis server and process tasks. You can also use monitoring tools like Flower to visualize task processing.
-
-### For PyPI Users
-
-For those who install YTGrid via pip, Celery is disabled by default to keep the package lean. If you want to enable Celery locally, you must:
-
-- Manually install and run Redis on your machine (e.g., using your system's package manager or running a Redis Docker container).
-- Toggle the `YTGRID_USE_CELERY` setting (using the CLI command `ytgrid toggle-celery` or by editing your `.env` file).
+Architectural docs:
+- [docs/VULNERABILITY_FIXES.md](docs/VULNERABILITY_FIXES.md)
+- [docs/FEATURE_SPECIFICATIONS.md](docs/FEATURE_SPECIFICATIONS.md)
+- [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
+- [docs/ROADMAP_SPECIFICATIONS.md](docs/ROADMAP_SPECIFICATIONS.md)
 
 ---
 
-## **🖥️ API Usage**
+## 🔮 Roadmap
 
-YTGrid provides a **FastAPI-based REST API**.
-
-### **1️⃣ Start a Session**
-
-```bash
-curl -X POST "http://127.0.0.1:8000/sessions/start" \
-     -H "Content-Type: application/json" \
-     -d '{"url": "https://www.youtube.com/watch?v=OaOK76hiW8I", "speed": 1.5, "loop_count": 3}'
-```
-
-### **2️⃣ Check Active Sessions**
-
-```bash
-curl -X GET "http://127.0.0.1:8000/sessions/status"
-```
-
-### **3️⃣ Stop a Session**
-
-```bash
-curl -X POST "http://127.0.0.1:8000/sessions/stop" \
-     -H "Content-Type: application/json" \
-     -d '{"session_id": 1}'
-```
+- Execution-history UI for `GET /profiles/{id}/history`
+- Proxy stats endpoint and dashboard panel
+- Profile import/export (JSON)
+- Kubernetes manifests for the split-microservice deployment
+- Optional PostgreSQL backend for multi-node profile sharing
 
 ---
 
-## **🛠️ Configuration**
+## 📜 License
 
-YTGrid is configurable via environment variables. Create a `.env` file in the project root with the following content:
-
-```ini
-# General settings
-YTGRID_HEADLESS_MODE=True
-YTGRID_DEFAULT_SPEED=1.0
-YTGRID_DEFAULT_LOOP_COUNT=1
-YTGRID_MAX_SESSIONS=5
-
-# Real-time updates
-YTGRID_REALTIME_UPDATES=False
-YTGRID_WEBSOCKET_SERVER_URL=ws://web:8000/ws
-
-# Browser settings
-YTGRID_USE_TEMP_USER_DATA=True
-YTGRID_BROWSER_TIMEOUT=20
-
-# Celery configuration (Celery is off by default in the PyPI release)
-YTGRID_USE_CELERY=False
-CELERY_BROKER_URL=redis://localhost:6379/0
-CELERY_RESULT_BACKEND=redis://localhost:6379/0
-
-# Session storage: Options include in-memory (default) or persistent storage (e.g., sqlite)
-YTGRID_SESSION_STORAGE=sqlite
-```
-
-*Note: For local PyPI usage, ensure Google Chrome is installed. For Docker deployments, the image includes Chrome installation.*
+[MIT](LICENSE)
 
 ---
 
-## 🔮  Future Releases
+## 🌍 Contributing
 
-We have an exciting roadmap ahead for YTGrid. Some of the planned enhancements include:
-
-- **Advanced Dynamic Scheduling:**  
-  Implement adaptive scheduling algorithms that dynamically adjust the number of parallel sessions based on real-time system metrics (e.g., CPU and memory usage). This will help optimize resource utilization without the need for complex predictive models.
-
-- **Expanded Automation Capabilities:**  
-  In addition to the current "video" task type, we plan to add support for:
-  - **Playlist:** Accept a YT playlist URL and play the entire playlist in a loop.
-  - **Channel:** Accept a YT channel URL, automatically gather all available video links from the channel, and play them all in loops.
-  
-  These enhancements will broaden the automation options available to users.
-
-- **Decoupled Microservices Architecture:**  
-  Separate the API gateway from the automation workers into distinct services, allowing for independent scaling and improved fault tolerance. We plan to explore container orchestration using Kubernetes for enhanced scalability in cloud environments.
-
-- **User Interface Enhancements:**  
-  Develop a web-based dashboard for real-time monitoring and control of automation sessions, making it easier for users to manage tasks without relying solely on the CLI.
-
-- **Extended Batch Processing Options:**  
-  Support additional input formats such as JSON and Excel for batch job submissions, along with interactive CLI prompts to simplify the process.
-
-These planned features aim to make YTGrid more robust, scalable, and user-friendly, ensuring that it evolves to meet the diverse needs of automation tasks.
-
-
----
-## **📜 License**
-
-This project is licensed under the [MIT License](LICENSE).
+1. Fork the repo
+2. `git checkout -b feature/my-feature`
+3. Add tests for your change (`pytest` must pass)
+4. Open a PR
 
 ---
 
-## **🌍 Contributing**
+## 📖 Resources
 
-Contributions are welcome!  
-To contribute:
-1. **Fork the repository.**
-2. **Create a feature branch:**
-   ```bash
-   git checkout -b feature/my-feature
-   ```
-3. **Commit your changes.**
-4. **Push to your fork and create a pull request.**
-
----
-
-## **📖 Additional Resources**
-
-- [Documentation](https://github.com/sandy-sp/ytgrid/README.md)
-- [PyPI Package](https://pypi.org/project/ytgrid/)
-- [Docker Hub Package](https://hub.docker.com/r/sandy1sp/ytgrid)
-- [GitHub Repository](https://github.com/sandy-sp/ytgrid/)
-
----
+- [PyPI](https://pypi.org/project/ytgrid/)
+- [Docker Hub](https://hub.docker.com/r/sandy1sp/ytgrid)
+- [GitHub](https://github.com/sandy-sp/ytgrid/)

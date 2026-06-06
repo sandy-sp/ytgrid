@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YTGrid | Dashboard v3.1</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">GRID</span>
+                <h2>YTGrid</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-target="dashboard-view">Dashboard</a>
+                <a href="#" class="nav-item" data-target="launch-view">Launch Task</a>
+                <a href="#" class="nav-item disabled">Proxy Pool</a>
+                <a href="#" class="nav-item disabled">Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search sessions...">
+                </div>
+                <div class="user-profile">
+                    <span class="status-indicator online"></span>
+                    <span>System Connected</span>
+                </div>
+            </header>
+
+            <div class="dashboard-content" id="dashboard-view">
+                <!-- Metrics Grid -->
+                <section class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">Active Sessions</div>
+                        <div class="metric-value" id="val-active-sessions">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">CPU Usage</div>
+                        <div class="metric-value" id="val-cpu-usage">--%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">RAM Usage</div>
+                        <div class="metric-value" id="val-ram-usage">--%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Proxy Pool</div>
+                        <div class="metric-value" id="val-proxy-pool">0 / 0</div>
+                    </div>
+                </section>
+
+                <!-- Sessions Table -->
+                <section class="table-container">
+                    <div class="table-header">
+                        <h3>Running Tasks</h3>
+                        <button class="btn-primary" onclick="document.querySelector('[data-target=\'launch-view\']').click()">+ New Task</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Session ID</th>
+                                <th>Status</th>
+                                <th>Duration</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessions-tbody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <div class="dashboard-content" id="launch-view" style="display: none;">
+                <section class="form-container" style="background: var(--surface); padding: 2rem; border-radius: 12px; border: 1px solid var(--border);">
+                    <h2>Launch Automation Task</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Start a new video, playlist, or channel automation session directly from the UI.</p>
+
+                    <form id="launch-form" onsubmit="submitTask(event)">
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem;">Target YouTube URL:</label>
+                            <input type="text" id="input-url" placeholder="https://www.youtube.com/watch?v=..." required style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: var(--background); color: white;">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem;">Playback Speed:</label>
+                                <input type="number" id="input-speed" step="0.25" min="0.25" max="16.0" value="1.0" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: var(--background); color: white;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem;">Loop Count:</label>
+                                <input type="number" id="input-loops" min="1" value="1" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: var(--background); color: white;">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; justify-content: center;">Start Engine</button>
+                    </form>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+    <style>
+        .nav-item.disabled { opacity: 0.5; pointer-events: none; }
+        .btn-primary { background: var(--accent); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 500; }
+        .btn-primary:hover { opacity: 0.9; }
+    </style>
+</body>
+</html>

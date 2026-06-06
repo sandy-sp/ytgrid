@@ -1,13 +1,13 @@
 [project]
 name = "ytgrid"
-version = "3.0.1"
+version = "3.1.0"
 description = "YTGrid is a powerful, scalable, and flexible YT automation tool that enables looped playback, remote control, and real-time tracking using a hybrid CLI + API architecture. It integrates FastAPI for REST API control, Selenium for browser automation, and Python multiprocessing/Celery for concurrent tasks."
 authors = [
     { name = "Sandeep Paidipati", email = "sandeep.paidipati@gmail.com" }
 ]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 
 dependencies = [
     "fastapi",
@@ -18,12 +18,15 @@ dependencies = [
     "rich",
     "python-dotenv",
     "websocket-client",
-    "beautifulsoup4", 
+    "beautifulsoup4",
     "celery",
     "redis",
     "typer",
     "httpx",
-    "pytest"
+    "pytest",
+    "pytest-asyncio",
+    "aiosqlite",
+    "yt-dlp>=2026.3.17,<2027.0.0"
 ]
 
 [build-system]
@@ -37,4 +40,8 @@ fix_path = "ytgrid.utils.setup:fix_path"
 [tool.poetry.group.dev.dependencies]
 httpx = "^0.28.1"
 typer = "^0.15.1"
+pytest-asyncio = "*"
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

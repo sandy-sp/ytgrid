@@ -1,25 +1,62 @@
 import multiprocessing
 import os
+import signal
+import threading
 from typing import Dict, List, Optional
 
 from multiprocessing.sharedctypes import Synchronized
 
 from ytgrid.utils.logger import log_info, log_error
 from ytgrid.automation.player import VideoPlayer
+from ytgrid.automation.playlist_player import PlaylistPlayer
+from ytgrid.automation.channel_player import ChannelPlayer
 from ytgrid.utils.config import config
 
 # Mapping from task type to automation player class.
 AUTOMATION_PLAYERS: Dict[str, object] = {
     "video": VideoPlayer,
-    # Future expansion: "batch": BatchPlayer, "channel": ChannelPlayer, etc.
+    "playlist": PlaylistPlayer,
+    "channel": ChannelPlayer,
 }
 
-def kill_browser_processes() -> None:
+from ytgrid.optimizer.orchestrator import optimizer
+
+
+def _record_execution_end(
+    session_id: str, status: str, error_message: Optional[str] = None
+) -> None:
+    """Persist an execution outcome. Best-effort — never breaks automation.
+
+    Runs inside the worker process where no event loop exists, so asyncio.run()
+    is the correct entry point. A no-op if no matching history row exists.
     """
-    Kill stray browser and chromedriver processes to free up system resources.
-    """
-    os.system("pkill -f chromedriver")
-    os.system("pkill -f chrome")
+    try:
+        import asyncio
+        from ytgrid.database.repository import ProfileRepository
+
+        async def _record() -> None:
+            await ProfileRepository().record_execution_end(session_id, status, error_message)
+
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.run(_record())
+        else:
+            errors: list[BaseException] = []
+
+            def _run_in_thread() -> None:
+                try:
+                    asyncio.run(_record())
+                except BaseException as exc:
+                    errors.append(exc)
+
+            thread = threading.Thread(target=_run_in_thread)
+            thread.start()
+            thread.join()
+            if errors:
+                raise errors[0]
+    except Exception as e:
+        log_error(f"Failed to record execution end for {session_id}: {e}")
 
 
 class TaskManager:
@@ -30,6 +67,8 @@ class TaskManager:
     def __init__(self) -> None:
         self.processes: Dict[str, object] = {}  # {session_id: Process or Celery Task}
         self.loop_counts: Dict[str, Synchronized] = {}  # {session_id: shared synchronized value}
+        self.last_start_error: Optional[str] = None
+        self._lock = threading.RLock()
 
     def start_session(
         self,
@@ -51,7 +90,20 @@ class TaskManager:
         :param use_celery: Optional flag to override default Celery setting.
         :return: True if the session is started successfully, False otherwise.
         """
+        self.last_start_error = None
+
+        if task_type not in AUTOMATION_PLAYERS:
+            self.last_start_error = f"Unsupported task type: {task_type}"
+            log_error(self.last_start_error)
+            return False
+
+        if optimizer.is_throttled:
+            self.last_start_error = "System resources under pressure"
+            log_error(f"Session {session_id} rejected: {self.last_start_error}.")
+            return False
+
         if session_id in self.processes:
+            self.last_start_error = "Session already exists"
             log_info(f"Session {session_id} already exists. Skipping duplicate.")
             return False
 
@@ -78,6 +130,24 @@ class TaskManager:
             self.processes[session_id] = process
             return True
 
+    def _prune_finished_processes(self) -> None:
+        """
+        Remove finished local/Celery tasks from the active-session registry.
+
+        Child processes cannot mutate the parent TaskManager, so pruning must
+        happen from parent-side reads such as status and dashboard polling.
+        """
+        with self._lock:
+            for session_id, proc in list(self.processes.items()):
+                if isinstance(proc, multiprocessing.Process):
+                    if proc.is_alive():
+                        continue
+                    proc.join(timeout=0)
+                    self.loop_counts.pop(session_id, None)
+                    del self.processes[session_id]
+                elif getattr(proc, "ready", lambda: False)():
+                    del self.processes[session_id]
+
     @staticmethod
     def _start_process(
         session_id: str,
@@ -91,6 +161,12 @@ class TaskManager:
         Static helper to run automation in a separate process.
         """
         os.environ["PYTHONWARNINGS"] = "ignore"
+        # Start a new session/process group so every browser child spawned by this
+        # automation run can be terminated together via os.killpg() on stop.
+        try:
+            os.setsid()
+        except OSError:
+            pass
         # Invokes the global task_manager's run_automation method.
         task_manager.run_automation(session_id, url, speed, loop_count, loop_counter, task_type)
 
@@ -112,16 +188,19 @@ class TaskManager:
             log_error(f"Unsupported task type: {task_type}")
             return
 
-        for loop in range(loop_count):
-            loop_counter.value = loop + 1
-            log_info(f"Session {session_id}: Loop {loop + 1}/{loop_count} - Playing {url} using '{task_type}' automation.")
-            player_instance = player_class()
-            try:
+        player_instance = player_class()
+        try:
+            for loop in range(loop_count):
+                loop_counter.value = loop + 1
+                log_info(f"Session {session_id}: Loop {loop + 1}/{loop_count} - Playing {url} using '{task_type}' automation.")
                 # Each loop plays one iteration of the video.
                 player_instance.play_video(url, speed, 1)
-            except Exception as e:
-                log_error(f"Session {session_id} loop {loop + 1} encountered error: {e}")
+        except Exception as e:
+            log_error(f"Session {session_id} encountered error: {e}")
+            _record_execution_end(session_id, "failed", str(e))
+            raise
 
+        _record_execution_end(session_id, "completed")
         log_info(f"Session {session_id}: All {loop_count} loops completed.")
         if session_id in self.loop_counts:
             del self.loop_counts[session_id]
@@ -136,8 +215,31 @@ class TaskManager:
         if session_id in self.processes:
             process = self.processes[session_id]
             if isinstance(process, multiprocessing.Process):
+                # Capture the process group before terminating so the whole tree
+                # (the worker plus its chromedriver/chrome children) can be reaped.
+                pgid = None
+                if process.pid:
+                    try:
+                        pgid = os.getpgid(process.pid)
+                    except (ProcessLookupError, PermissionError):
+                        pgid = None
+
                 process.terminate()
-                process.join()
+                process.join(timeout=10)
+                if process.is_alive():
+                    log_error(f"Multiprocessing session {session_id} did not terminate cleanly. Sending SIGKILL.")
+                    try:
+                        os.kill(process.pid, signal.SIGKILL)
+                    except (ProcessLookupError, TypeError):
+                        pass  # Process already exited
+
+                # Kill the whole process group to clean up browser children.
+                if pgid is not None and pgid != os.getpgrp():
+                    try:
+                        os.killpg(pgid, signal.SIGKILL)
+                    except (ProcessLookupError, PermissionError):
+                        pass
+
                 if session_id in self.loop_counts:
                     del self.loop_counts[session_id]
                 log_info(f"Multiprocessing session {session_id} stopped.")
@@ -145,7 +247,7 @@ class TaskManager:
                 process.revoke(terminate=True)
                 log_info(f"Celery Task {session_id} revoked.")
 
-            kill_browser_processes()
+            _record_execution_end(session_id, "stopped")
             del self.processes[session_id]
             return True
         return False
@@ -156,6 +258,7 @@ class TaskManager:
 
         :return: List of dictionaries, each representing a session.
         """
+        self._prune_finished_processes()
         active_sessions = []
         for session_id, proc in self.processes.items():
             if isinstance(proc, multiprocessing.Process):

@@ -1,5 +1,5 @@
 """
-Session Store Module (Version 3)
+Session Store Module (Version 3.1)
 
 This module defines an abstract base class for session storage and two concrete implementations:
   - InMemorySessionStore: a simple in-memory session store.
@@ -20,7 +20,7 @@ class AbstractSessionStore(ABC):
     def create_session(self, url: str) -> int:
         """
         Creates a new session given a URL and returns its session ID.
-        
+
         :param url: The URL associated with the session.
         :return: An integer session ID.
         """
@@ -30,7 +30,7 @@ class AbstractSessionStore(ABC):
     def stop_session(self, session_id: int) -> bool:
         """
         Stops an active session.
-        
+
         :param session_id: The identifier of the session to stop.
         :return: True if the session was stopped successfully, False otherwise.
         """
@@ -40,7 +40,7 @@ class AbstractSessionStore(ABC):
     def get_active_sessions(self) -> List[SessionRecord]:
         """
         Retrieves a list of active sessions.
-        
+
         :return: A list of session records where each record is a dictionary containing session details.
         """
         pass
@@ -49,7 +49,7 @@ class AbstractSessionStore(ABC):
 class InMemorySessionStore(AbstractSessionStore):
     """
     A simple in-memory session store.
-    
+
     This store maintains sessions in a dictionary and uses an incremental counter for session IDs.
     """
     def __init__(self) -> None:
@@ -82,7 +82,7 @@ class InMemorySessionStore(AbstractSessionStore):
 class MultiprocessingSessionStore(AbstractSessionStore):
     """
     A session store for use with multiprocessing environments.
-    
+
     This store requires a shared dictionary (e.g., provided by a multiprocessing.Manager) to store sessions,
     and maintains its own session ID counter.
     """

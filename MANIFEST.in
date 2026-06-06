@@ -2,8 +2,7 @@ include README.md
 include LICENSE
 include pyproject.toml
 include poetry.lock
-include .env
-recursive-include ytgrid *.py
+recursive-include ytgrid *.py *.sql *.html *.css *.js
 recursive-include tests *.py
 recursive-include tests *.csv
 exclude .gitignore

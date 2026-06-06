@@ -28,12 +28,20 @@ app = typer.Typer(
         "                  The CSV file must have a header row with columns:\n"
         "                    session_id, url, speed, loops, and optionally task_type (defaults to 'video').\n\n"
         "  toggle-celery- Toggle the YTGRID_USE_CELERY setting in the .env file (on/off).\n\n"
+        "  profile      - Manage execution profiles and tasks.\n\n"
         "For more details on each command, use 'ytgrid <command> --help'."
     )
 )
 
+profile_app = typer.Typer(help="Manage execution profiles and persistence")
+app.add_typer(profile_app, name="profile")
+
 # Use a configurable API base URL if provided in config; otherwise, default to localhost.
 API_BASE_URL: str = getattr(config, "API_BASE_URL", "http://127.0.0.1:8000")
+API_KEY: str = getattr(config, "API_KEY", "")
+
+def _get_headers():
+    return {"X-API-Key": API_KEY} if API_KEY else {}
 
 
 def print_custom_help() -> None:
@@ -59,6 +67,8 @@ Commands:
                    session_id, url, speed, loops, and optionally task_type (defaults to 'video').
 
   toggle-celery- Toggle the YTGRID_USE_CELERY setting in the .env file (on/off).
+
+  profile      - Manage execution profiles and persistence.
 
 General Options:
   --install-completion   Install shell completion for the current shell.
@@ -96,10 +106,12 @@ def start_backend() -> None:
     """
     if not is_backend_running():
         typer.echo("🔄 Starting YTGrid backend...")
+        log_file = open("ytgrid.log", "a")
+        import sys
         subprocess.Popen(
-            ["uvicorn", "ytgrid.backend.main:app", "--host", "0.0.0.0", "--port", "8000"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            ["uvicorn", "ytgrid.backend.main:app", "--host", "127.0.0.1", "--port", "8000"],
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
         )
         time.sleep(3)  # Allow time for the server to start
         if is_backend_running():
@@ -107,27 +119,37 @@ def start_backend() -> None:
         else:
             typer.echo("❌ Failed to start YTGrid backend. Please start it manually.")
 
+@app.command()
+def server():
+    """
+    Start the FastAPI web server for the User Dashboard and API directly.
+    """
+    typer.echo("🚀 Booting YTGrid Web Dashboard...")
+    typer.echo("🔗 Once initialized, view the dashboard at: http://127.0.0.1:8000/static/index.html")
+    import uvicorn
+    uvicorn.run("ytgrid.backend.main:app", host="127.0.0.1", port=8000, reload=False)
+
 
 @app.command()
 def start(
-    session_id: str = typer.Option(
-        ..., 
-        help="A unique identifier for the session (e.g., 'session1')."
+    session_id: Optional[str] = typer.Option(
+        None,
+        help="A unique identifier for the session (e.g., 'session1'). Auto-generated if omitted."
     ),
     url: str = typer.Option(
-        ..., 
+        ...,
         help="The full YouTube video URL to be automated (e.g., 'https://www.youtube.com/watch?v=XYZ')."
     ),
     speed: float = typer.Option(
-        1.0, 
+        1.0,
         help="Playback speed multiplier (e.g., 1.0 for normal speed; use higher values for faster playback)."
     ),
     loops: int = typer.Option(
-        1, 
+        1,
         help="The number of times to loop the video (e.g., 3 means the video plays three times)."
     ),
     task_type: str = typer.Option(
-        "video", 
+        "video",
         help="Type of automation task. Defaults to 'video'."
     ),
 ):
@@ -140,6 +162,10 @@ def start(
       ytgrid start --session-id session1 --url "https://www.youtube.com/watch?v=XYZ" --speed 1.5 --loops 3 --task_type video
     """
     start_backend()
+
+    import uuid
+    session_id = session_id or uuid.uuid4().hex[:8]
+
     payload = {
         "session_id": session_id,
         "url": url,
@@ -147,7 +173,7 @@ def start(
         "loop_count": loops,
         "task_type": task_type,
     }
-    response = requests.post(f"{API_BASE_URL}/tasks/", json=payload)
+    response = requests.post(f"{API_BASE_URL}/tasks/", json=payload, headers=_get_headers())
     if response.status_code == 201:
         typer.echo(f"✅ Session '{session_id}' started successfully.")
     else:
@@ -166,7 +192,7 @@ def status():
       ytgrid status
     """
     start_backend()
-    response = requests.get(f"{API_BASE_URL}/tasks/")
+    response = requests.get(f"{API_BASE_URL}/tasks/", headers=_get_headers())
     if response.status_code == 200:
         sessions = response.json().get("active_sessions", [])
         if sessions:
@@ -184,7 +210,7 @@ def status():
 @app.command()
 def stop(
     session_id: str = typer.Option(
-        ..., 
+        ...,
         help="The unique identifier of the session to stop (as provided during the start command)."
     )
 ):
@@ -197,7 +223,7 @@ def stop(
       ytgrid stop --session-id session1
     """
     start_backend()
-    response = requests.post(f"{API_BASE_URL}/tasks/stop", json={"session_id": session_id})
+    response = requests.post(f"{API_BASE_URL}/tasks/stop", json={"session_id": session_id}, headers=_get_headers())
     if response.status_code == 200:
         typer.echo(f"✅ Session '{session_id}' stopped successfully.")
     else:
@@ -207,11 +233,11 @@ def stop(
 @app.command()
 def batch(
     file: Path = typer.Argument(
-        ..., 
+        ...,
         help="Path to a CSV file containing session tasks. The CSV must have a header row with columns: session_id, url, speed, loops, and optionally task_type."
     ),
     delimiter: str = typer.Option(
-        ",", 
+        ",",
         help="The CSV delimiter. Default is a comma."
     ),
 ):
@@ -259,7 +285,7 @@ def batch(
             "loop_count": loops,
             "task_type": task_type,
         }
-        response = requests.post(f"{API_BASE_URL}/tasks/", json=payload)
+        response = requests.post(f"{API_BASE_URL}/tasks/", json=payload, headers=_get_headers())
         if response.status_code == 201:
             typer.echo(f"✅ Session '{session_id}' started successfully.")
         else:
@@ -273,7 +299,7 @@ def batch(
 @app.command("toggle-celery")
 def toggle_celery(
     env_file: Path = typer.Option(
-        ".env", 
+        ".env",
         help="Path to the .env file where YTGRID_USE_CELERY is set."
     )
 ):
@@ -315,6 +341,71 @@ def toggle_celery(
     env_file.write_text("\n".join(new_lines) + "\n")
     typer.echo(f"✅ Toggled YTGRID_USE_CELERY from {current_value} to {new_value}")
 
+@profile_app.command("create")
+def profile_create(
+    name: str = typer.Argument(..., help="The name of the profile."),
+    description: Optional[str] = typer.Option(None, help="The description of the profile.")
+):
+    start_backend()
+    payload = {"name": name, "description": description}
+    response = requests.post(f"{API_BASE_URL}/profiles/", json=payload, headers=_get_headers())
+    if response.status_code == 200:
+        typer.echo(f"✅ Profile '{name}' created successfully with ID {response.json().get('profile_id')}.")
+    else:
+        typer.echo(f"❌ Error: {response.json().get('detail')}", err=True)
+
+@profile_app.command("list")
+def profile_list():
+    start_backend()
+    response = requests.get(f"{API_BASE_URL}/profiles/", headers=_get_headers())
+    if response.status_code == 200:
+        profiles = response.json()
+        if profiles:
+            typer.echo("📌 Execution Profiles:")
+            for p in profiles:
+                typer.echo(f" - ID: {p['id']} | Name: {p['name']} | Description: {p['description']}")
+        else:
+             typer.echo("✅ No profiles exist yet.")
+    else:
+        typer.echo("❌ Error fetching profiles.", err=True)
+
+@profile_app.command("add")
+def profile_add(
+    name: str = typer.Argument(..., help="The name or ID of the profile."),
+    url: str = typer.Option(..., help="The YouTube video URL to add."),
+    speed: float = typer.Option(1.0, help="Playback speed multiplier."),
+    loops: int = typer.Option(1, help="Number of times to loop the video.")
+):
+    start_backend()
+    # Resolve profile ID if name passed
+    profile_resp = requests.get(f"{API_BASE_URL}/profiles/{name}", headers=_get_headers())
+    if profile_resp.status_code != 200:
+        typer.echo(f"❌ Profile '{name}' not found.", err=True)
+        return
+
+    profile_id = profile_resp.json()['id']
+    payload = {
+        "video_url": url,
+        "speed": speed,
+        "loop_count": loops
+    }
+    response = requests.post(f"{API_BASE_URL}/profiles/{profile_id}/entries", json=payload, headers=_get_headers())
+    if response.status_code == 200:
+        typer.echo(f"✅ Entry added to Profile '{name}' successfully.")
+    else:
+        typer.echo(f"❌ Error: {response.json().get('detail')}", err=True)
+
+@profile_app.command("run")
+def profile_run(
+    name: str = typer.Argument(..., help="The name or ID of the profile to run.")
+):
+    start_backend()
+    response = requests.post(f"{API_BASE_URL}/profiles/{name}/run", headers=_get_headers())
+    if response.status_code == 200:
+        data = response.json()
+        typer.echo(f"✅ Profile '{name}' triggered successfully. Spawned sessions: {', '.join(data.get('sessions', []))}")
+    else:
+        typer.echo(f"❌ Error: {response.json().get('detail')}", err=True)
 
 def main():
     app()

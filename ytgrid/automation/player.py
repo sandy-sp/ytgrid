@@ -1,8 +1,8 @@
 """
-YTGrid Automation - Video Player (Version 3)
+YTGrid Automation - Video Player (Version 3.1)
 
 This module defines a VideoPlayer that plays YouTube videos for a specified number of loops.
-Enhancements in Version 3 include:
+Enhancements in Version 3.1 include:
   - A context manager for Selenium browser sessions to ensure proper cleanup.
   - Improved error handling and structured logging.
   - Integration with real-time update capabilities via WebSocket.
@@ -11,6 +11,8 @@ Enhancements in Version 3 include:
 import time
 import json
 import tempfile
+import ipaddress
+from urllib.parse import urlparse
 from contextlib import contextmanager
 
 import websocket
@@ -25,6 +27,8 @@ from ytgrid.automation.browser import get_browser
 from ytgrid.utils.logger import log_info, log_error
 from ytgrid.utils.config import config
 from ytgrid.automation.base_player import AutomationPlayer
+from ytgrid.proxy.pool import proxy_pool
+
 
 
 def send_update(ws, message):
@@ -35,8 +39,29 @@ def send_update(ws, message):
         log_error(f"WebSocket error: {e}")
 
 
+BLOCKED_NETWORKS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("169.254.0.0/16"),
+    ipaddress.ip_network("127.0.0.0/8"),
+]
+
+def is_safe_url(url: str) -> bool:
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        return False
+    try:
+        ip = ipaddress.ip_address(parsed.hostname)
+        return not any(ip in net for net in BLOCKED_NETWORKS)
+    except ValueError:
+        return True
+
 def get_video_title(video_url):
     """Extract the video title from the YouTube page."""
+    if not is_safe_url(video_url):
+        log_error(f"Unsafe URL rejected: {video_url}")
+        return "Unknown Video"
     try:
         import requests
         response = requests.get(video_url, timeout=10)
@@ -73,17 +98,17 @@ def skip_ad(driver):
 
 
 @contextmanager
-def browser_session():
+def browser_session(proxy=None):
     """
     Context manager for a Selenium browser session.
-    
-    Creates a temporary user-data directory (if configured) and yields the (driver, wait)
-    tuple. Ensures that the driver is properly quit after use.
+
+    Creates a temporary user-data directory and yields the (driver, wait)
+    tuple. Ensures that the driver is properly quit and the directory is cleaned up.
     """
-    temp_user_data = None
-    if config.USE_TEMP_USER_DATA:
-        temp_user_data = tempfile.mkdtemp()
-    driver, wait = get_browser(user_data_dir=temp_user_data)
+    import os
+    temp_dir_obj = tempfile.TemporaryDirectory(prefix="ytgrid_", dir="/tmp")
+    os.chmod(temp_dir_obj.name, 0o700)
+    driver, wait = get_browser(user_data_dir=temp_dir_obj.name, proxy=proxy)
     try:
         yield driver, wait
     finally:
@@ -91,6 +116,8 @@ def browser_session():
             driver.quit()
         except Exception as e:
             log_error(f"Error quitting browser: {e}")
+        finally:
+            temp_dir_obj.cleanup()
 
 
 class VideoPlayer(AutomationPlayer):
@@ -109,7 +136,9 @@ class VideoPlayer(AutomationPlayer):
                 ws = None
 
         for loop in range(loop_count):
-            log_info(f"Loop {loop + 1}/{loop_count}: Starting playback for {video_url}")
+            proxy = proxy_pool.get_proxy() if config.PROXY_ENABLED else None
+            proxy_log = f" (Proxy: {proxy.host}:{proxy.port})" if proxy else ""
+            log_info(f"Loop {loop + 1}/{loop_count}: Starting playback for {video_url}{proxy_log}")
             if ws:
                 send_update(ws, {"status": "playing", "loop": loop + 1})
 
@@ -118,7 +147,7 @@ class VideoPlayer(AutomationPlayer):
                 log_info(f"Extracted video title: {video_title}")
 
                 # Use the context manager to guarantee browser cleanup.
-                with browser_session() as (driver, wait):
+                with browser_session(proxy=proxy) as (driver, wait):
                     driver.get("https://www.youtube.com/")
                     search_box = wait.until(EC.presence_of_element_located((By.NAME, "search_query")))
                     search_box.clear()
@@ -155,10 +184,14 @@ class VideoPlayer(AutomationPlayer):
                         time.sleep(video_duration / speed)
 
                     log_info(f"Loop {loop + 1} completed.")
+                    if proxy:
+                        proxy_pool.report_success(proxy)
                     if ws:
                         send_update(ws, {"status": "completed", "loop": loop + 1})
             except Exception as e:
                 log_error(f"Error during loop {loop + 1}: {e}")
+                if proxy:
+                    proxy_pool.report_failure(proxy)
                 if ws:
                     send_update(ws, {"status": "error", "message": str(e), "loop": loop + 1})
 

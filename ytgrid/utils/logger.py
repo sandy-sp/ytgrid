@@ -1,5 +1,5 @@
 """
-Logger Module for YTGrid (Version 3)
+Logger Module for YTGrid (Version 3.1)
 
 This module sets up logging with a standardized format and provides helper functions for logging
 information and error messages. Logs are output to both the console and a file named 'ytgrid.log'.
@@ -21,7 +21,7 @@ logging.basicConfig(
 def log_info(message: str) -> None:
     """
     Log an informational message.
-    
+
     :param message: The message to log.
     """
     logging.info(message)
@@ -30,7 +30,7 @@ def log_info(message: str) -> None:
 def log_error(message: str) -> None:
     """
     Log an error message.
-    
+
     :param message: The error message to log.
     """
     logging.error(message)

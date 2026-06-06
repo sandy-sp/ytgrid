@@ -1,5 +1,5 @@
 """
-Setup Script for YTGrid (Version 3)
+Setup Script for YTGrid (Version 3.1)
 
 This script ensures that the 'ytgrid' CLI script is accessible by adding the default pip --user
 installation directory to the user's PATH if it isn't already present. It also verifies that
@@ -22,7 +22,7 @@ def fix_path() -> None:
     if bin_path not in os.environ.get("PATH", ""):
         print(f"📌 Adding {bin_path} to PATH (run 'export PATH=\"$HOME/.local/bin:$PATH\"' to make it permanent)")
         os.environ["PATH"] = f"{bin_path}:{os.environ.get('PATH', '')}"
-    
+
     # Check if the 'ytgrid' CLI script is installed in the correct location.
     ytgrid_path = shutil.which("ytgrid")
     if ytgrid_path:

@@ -17,4 +17,13 @@ __all__ = [
 
 from .base_player import AutomationPlayer
 from .player import VideoPlayer, play_video
+from .playlist_player import PlaylistPlayer
+from .channel_player import ChannelPlayer
 from .browser import get_browser
+
+# Map task_type string to the class responsible for it
+AUTOMATION_PLAYERS = {
+    "video": VideoPlayer,
+    "playlist": PlaylistPlayer,
+    "channel": ChannelPlayer
+}

@@ -1,26 +1,41 @@
 services:
-  ytgrid:
-    build: .
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
     container_name: ytgrid_api
     ports:
       - "8000:8000"
     environment:
-      # General settings (adjust as needed)
+      - YTGRID_API_KEY=${YTGRID_API_KEY:?Set YTGRID_API_KEY before running docker compose}
       - YTGRID_HEADLESS_MODE=True
       - YTGRID_DEFAULT_SPEED=1.0
       - YTGRID_DEFAULT_LOOP_COUNT=1
       - YTGRID_MAX_SESSIONS=10
-      # Real-time updates
-      - YTGRID_REALTIME_UPDATES=False
-      - YTGRID_WEBSOCKET_SERVER_URL=ws://web:8000/ws
-      # Browser settings
-      - YTGRID_USE_TEMP_USER_DATA=True
-      - YTGRID_BROWSER_TIMEOUT=20
-      # Celery configuration: enable if you want to test Celery with Redis
       - YTGRID_USE_CELERY=True
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      # Optionally, any other environment variables can be set here.
+      - YTGRID_DB_PATH=ytgrid.db
+    volumes:
+      - ./:/app
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: ytgrid_worker
+    environment:
+      - YTGRID_API_KEY=${YTGRID_API_KEY:?Set YTGRID_API_KEY before running docker compose}
+      - YTGRID_HEADLESS_MODE=True
+      - YTGRID_USE_CELERY=True
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - YTGRID_DB_PATH=ytgrid.db
+    volumes:
+      - ./:/app
+      - /dev/shm:/dev/shm
     depends_on:
       - redis
 

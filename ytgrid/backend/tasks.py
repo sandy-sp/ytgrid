@@ -1,5 +1,5 @@
 """
-Celery Tasks Module (Version 3)
+Celery Tasks Module (Version 3.1)
 
 This module defines Celery tasks for automation. The task 'run_automation'
 executes the automation player for a given session.
@@ -7,7 +7,7 @@ executes the automation player for a given session.
 
 from typing import Any
 from ytgrid.backend.celery_app import celery_app
-from ytgrid.backend.task_manager import AUTOMATION_PLAYERS
+from ytgrid.backend.task_manager import AUTOMATION_PLAYERS, _record_execution_end
 from ytgrid.utils.logger import log_info, log_error
 
 @celery_app.task(name="ytgrid.tasks.run_automation")
@@ -25,6 +25,7 @@ def run_automation(session_id: str, url: str, speed: float, loop_count: int, tas
     player_class: Any = AUTOMATION_PLAYERS.get(task_type)
     if not player_class:
         log_error(f"Unsupported task type: {task_type}")
+        _record_execution_end(session_id, "failed", f"Unsupported task type: {task_type}")
         return "error"
 
     for loop in range(loop_count):
@@ -35,7 +36,9 @@ def run_automation(session_id: str, url: str, speed: float, loop_count: int, tas
             player_instance.play_video(url, speed, 1)
         except Exception as e:
             log_error(f"Celery Task - Session {session_id}: Loop {loop + 1} encountered error: {e}")
+            _record_execution_end(session_id, "failed", str(e))
             return "error"
 
     log_info(f"Celery Task - Session {session_id}: All {loop_count} loops completed.")
+    _record_execution_end(session_id, "completed")
     return "completed"
