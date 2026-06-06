@@ -51,6 +51,13 @@ http://127.0.0.1:1420
 ## Native Tauri Builds
 
 Native builds require Rust/Cargo and platform-specific Tauri dependencies.
+On Debian/Ubuntu Linux, install the native packages first:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y pkg-config libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+```
+
 After installing Rust:
 
 ```bash
@@ -62,6 +69,28 @@ npm run tauri build
 
 This workspace currently verifies the web frontend with `npm run build`.
 Native verification should be run on machines with the full Tauri toolchain.
+
+## GitHub Desktop Builds
+
+Native cross-platform packaging is handled by
+`.github/workflows/desktop-release.yml`.
+
+Run it manually from the GitHub Actions tab to produce workflow artifacts for:
+
+- Windows x64
+- macOS arm64
+- macOS x64
+- Linux x64
+
+To create a draft desktop release with attached bundles:
+
+```bash
+git tag desktop-v3.2.0-alpha.0
+git push origin refs/tags/desktop-v3.2.0-alpha.0
+```
+
+The desktop bundles are currently unsigned preview builds. The YTGrid API is
+still started separately; the app connects to it using the API URL and key.
 
 ## Backend CORS
 

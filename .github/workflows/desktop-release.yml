@@ -1,0 +1,108 @@
+name: 🖥️ Build Desktop Apps
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "desktop-v*"
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-desktop:
+    name: 🧱 Build ${{ matrix.name }}
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64
+            platform: macos-latest
+            args: "--target aarch64-apple-darwin"
+            artifact: ytgrid-desktop-macos-arm64
+            rust_targets: aarch64-apple-darwin
+          - name: macOS x64
+            platform: macos-latest
+            args: "--target x86_64-apple-darwin"
+            artifact: ytgrid-desktop-macos-x64
+            rust_targets: x86_64-apple-darwin
+          - name: Linux x64
+            platform: ubuntu-22.04
+            args: ""
+            artifact: ytgrid-desktop-linux-x64
+            rust_targets: ""
+          - name: Windows x64
+            platform: windows-latest
+            args: ""
+            artifact: ytgrid-desktop-windows-x64
+            rust_targets: ""
+
+    steps:
+      - name: 🛠️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐧 Install Linux Tauri Dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: 🟢 Set Up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.2"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 🦀 Set Up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - name: 🧰 Cache Rust Artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/src-tauri -> target
+
+      - name: 📦 Install Desktop Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: 🔎 Audit Desktop Dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=moderate
+
+      - name: 🏗️ Build Desktop Bundle
+        if: ${{ !startsWith(github.ref, 'refs/tags/desktop-v') }}
+        uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: frontend
+          args: ${{ matrix.args }}
+
+      - name: 🚀 Build And Attach Desktop Release
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: frontend
+          args: ${{ matrix.args }}
+          tagName: ${{ github.ref_name }}
+          releaseName: "YTGrid Desktop ${{ github.ref_name }}"
+          releaseBody: "Unsigned YTGrid desktop controller preview builds. Start the YTGrid API separately, then connect from the desktop app with your API URL and API key."
+          releaseDraft: true
+          prerelease: true
+
+      - name: 📤 Upload Desktop Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          if-no-files-found: error
+          path: |
+            frontend/src-tauri/target/**/release/bundle/**
