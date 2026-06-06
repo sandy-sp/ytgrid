@@ -16,6 +16,7 @@ integrate dynamic scheduling based on system resource monitoring.
 import logging
 import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 # Import the aggregated router which includes both /sessions and /tasks endpoints
@@ -71,6 +72,14 @@ app = FastAPI(
     ),
     version="3.1.0",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["X-API-Key", "Content-Type"],
 )
 
 # Include the aggregated router for sessions and tasks

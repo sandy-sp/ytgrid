@@ -385,6 +385,45 @@ rm -f ytgrid/ytgrid.db ytgrid.log /tmp/ytgrid_*
 
 ---
 
+## Optional appendix: Desktop controller preview
+
+This is the v3.2-alpha desktop controller path. It does not replace the v3.1
+browser dashboard yet; it verifies that the React/Vite frontend can connect to
+the local API and that the Tauri shell is ready for native builds on machines
+with Rust installed.
+
+Start the API as in section 3, then in a new terminal:
+
+```bash
+cd frontend
+npm ci
+npm run build
+npm audit --audit-level=moderate
+npm run dev
+```
+
+Visit `http://127.0.0.1:1420`, set the API URL to
+`http://127.0.0.1:8000`, and paste `$YTGRID_API_KEY`.
+
+- [ ] Desktop web preview loads
+- [ ] Health status shows connected
+- [ ] Active task list populates
+- [ ] Starting/stopping a task works through the desktop UI
+- [ ] CSV batch import parses `tests/test.csv`
+
+Native Tauri smoke, if Rust/Cargo is installed:
+
+```bash
+cd frontend
+npm run tauri -- --version
+npm run tauri -- build
+```
+
+- [ ] Tauri CLI reports a version
+- [ ] Native desktop bundle builds for the host platform
+
+---
+
 ## Release sign-off
 
 All boxes ticked → safe to tag and push.

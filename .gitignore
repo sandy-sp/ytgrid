@@ -30,6 +30,11 @@ wheels/
 .installed.cfg
 *.egg
 
+# Frontend / Tauri
+node_modules/
+frontend/dist/
+frontend/src-tauri/target/
+
 # Testing
 .tox/
 .coverage

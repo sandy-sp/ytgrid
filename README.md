@@ -201,6 +201,10 @@ Open `http://127.0.0.1:8000/static/index.html` after starting the server. The da
 
 For the full shipped-app summary, current limitations, and release evidence, see [`docs/APP_OVERVIEW.md`](docs/APP_OVERVIEW.md).
 
+## 🖥️ Desktop Controller Preview
+
+The v3.2 desktop foundation lives in [`frontend/`](frontend/) and is documented in [`docs/DESKTOP_APP.md`](docs/DESKTOP_APP.md). It uses React + Vite with a Tauri v2 shell and connects to the existing YTGrid API at `127.0.0.1:8000`.
+
 ---
 
 ## 🌐 Proxy Rotation (optional)

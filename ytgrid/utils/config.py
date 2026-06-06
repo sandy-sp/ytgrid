@@ -19,6 +19,24 @@ class Config:
     # General settings
     API_KEY: str = os.getenv("YTGRID_API_KEY", "")
     API_BASE_URL: str = os.getenv("YTGRID_API_BASE_URL", "http://127.0.0.1:8000")
+    CORS_ALLOWED_ORIGINS: list[str] = [
+        origin.strip()
+        for origin in os.getenv(
+            "YTGRID_CORS_ALLOWED_ORIGINS",
+            ",".join(
+                [
+                    "http://localhost:1420",
+                    "http://127.0.0.1:1420",
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5173",
+                    "tauri://localhost",
+                    "https://tauri.localhost",
+                    "http://tauri.localhost",
+                ]
+            ),
+        ).split(",")
+        if origin.strip()
+    ]
     HEADLESS_MODE: bool = os.getenv("YTGRID_HEADLESS_MODE", "True").lower() == "true"
     DEFAULT_SPEED: float = float(os.getenv("YTGRID_DEFAULT_SPEED", 1.0))
     DEFAULT_LOOP_COUNT: int = int(os.getenv("YTGRID_DEFAULT_LOOP_COUNT", 1))

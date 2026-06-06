@@ -97,3 +97,9 @@ The v3.1 stabilization pass verified:
 - Active session cleanup after completion.
 
 See `docs/ACTION_PLAN.md` for the detailed checklist and validation notes.
+
+## Desktop Direction
+
+The v3.2 desktop foundation lives in `frontend/` and is documented in
+`docs/DESKTOP_APP.md`. It is a Tauri + React controller for the existing local
+API; it does not bundle or install the backend yet.

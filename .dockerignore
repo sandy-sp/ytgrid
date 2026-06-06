@@ -15,3 +15,6 @@ build/
 *.log
 proxies.txt
 ytgrid/ytgrid.db
+frontend/node_modules/
+frontend/dist/
+frontend/src-tauri/target/

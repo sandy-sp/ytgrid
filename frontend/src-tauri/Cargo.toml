@@ -1,0 +1,15 @@
+[package]
+name = "ytgrid-desktop"
+version = "3.2.0-alpha.0"
+description = "YTGrid Desktop Controller"
+authors = ["YTGrid maintainers"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
