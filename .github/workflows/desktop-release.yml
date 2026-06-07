@@ -76,6 +76,10 @@ jobs:
         working-directory: frontend
         run: npm audit --audit-level=moderate
 
+      - name: 🧪 Test Desktop Frontend
+        working-directory: frontend
+        run: npm test
+
       - name: 🏗️ Build Desktop Bundle
         if: ${{ !startsWith(github.ref, 'refs/tags/desktop-v') }}
         uses: tauri-apps/tauri-action@v0.6.2

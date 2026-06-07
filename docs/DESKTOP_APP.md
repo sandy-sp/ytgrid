@@ -48,6 +48,15 @@ Open:
 http://127.0.0.1:1420
 ```
 
+Run the frontend checks:
+
+```bash
+cd frontend
+npm test
+npm run build
+npm audit --audit-level=moderate
+```
+
 ## Native Tauri Builds
 
 Native builds require Rust/Cargo and platform-specific Tauri dependencies.
@@ -69,6 +78,7 @@ npm run tauri build
 
 This workspace currently verifies the web frontend with `npm run build`.
 Native verification should be run on machines with the full Tauri toolchain.
+The GitHub desktop workflow runs the frontend tests before packaging.
 
 ## GitHub Desktop Builds
 

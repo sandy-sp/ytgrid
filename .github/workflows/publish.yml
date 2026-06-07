@@ -51,6 +51,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: 🧪 Test Desktop Frontend
+        working-directory: frontend
+        run: npm test
+
       - name: 🖥️ Build Desktop Frontend
         working-directory: frontend
         run: npm run build

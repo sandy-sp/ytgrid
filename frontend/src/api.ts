@@ -65,6 +65,58 @@ export function inferTaskType(url: string): TaskRequest["task_type"] {
   return "video";
 }
 
+function parseCsvLine(line: string): string[] {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const next = line[index + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (inQuotes) {
+    throw new Error("CSV contains an unterminated quoted value");
+  }
+
+  values.push(current.trim());
+  return values;
+}
+
+function coercePositiveNumber(value: string, fallback: number, field: string, rowNumber: number) {
+  if (!value) return fallback;
+  const numberValue = Number(value);
+  if (!Number.isFinite(numberValue) || numberValue <= 0) {
+    throw new Error(`CSV row ${rowNumber} has invalid ${field}`);
+  }
+  return numberValue;
+}
+
+function normalizeTaskType(value: string, url: string, rowNumber: number): TaskRequest["task_type"] {
+  if (!value) return inferTaskType(url);
+  if (value === "video" || value === "playlist" || value === "channel") return value;
+  throw new Error(`CSV row ${rowNumber} has invalid task_type`);
+}
+
 export function parseCsv(text: string): TaskRequest[] {
   const lines = text
     .split(/\r?\n/)
@@ -72,22 +124,21 @@ export function parseCsv(text: string): TaskRequest[] {
     .filter(Boolean);
   if (lines.length <= 1) return [];
 
-  const headers = lines[0].split(",").map((header) => header.trim());
+  const headers = parseCsvLine(lines[0]).map((header) => header.trim());
   return lines.slice(1).map((line, index) => {
-    const values = line.split(",").map((value) => value.trim());
+    const rowNumber = index + 2;
+    const values = parseCsvLine(line);
     const row = Object.fromEntries(headers.map((header, i) => [header, values[i] ?? ""]));
     const url = row.url;
     if (!url) {
-      throw new Error(`CSV row ${index + 2} is missing url`);
+      throw new Error(`CSV row ${rowNumber} is missing url`);
     }
-    const loopCount = Number(row.loop_count || row.loops || 1);
-    const speed = Number(row.speed || 1);
     return {
       session_id: row.session_id || undefined,
       url,
-      speed: Number.isFinite(speed) ? speed : 1,
-      loop_count: Number.isFinite(loopCount) ? loopCount : 1,
-      task_type: (row.task_type as TaskRequest["task_type"]) || inferTaskType(url),
+      speed: coercePositiveNumber(row.speed, 1, "speed", rowNumber),
+      loop_count: coercePositiveNumber(row.loop_count || row.loops, 1, "loop_count", rowNumber),
+      task_type: normalizeTaskType(row.task_type, url, rowNumber),
     };
   });
 }
